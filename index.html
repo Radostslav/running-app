@@ -15,137 +15,157 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
 <title>TRImates Run</title>
 <style>
-/* ---------- tokeny ---------- */
+/* =========================================================
+   Design systém podle Practical UI (Adham Dannaway)
+   – mezery v krocích po 8 pt, typová škála 1,25, jen regular a bold
+   – kontrast textu ≥ 4,5:1, UI prvků ≥ 3:1, bez čistě černé a bílé
+   – 3 váhy tlačítek, cíle ≥ 48 pt, žádná zakázaná tlačítka
+   ========================================================= */
 :root{
- --paper:#F3F4F2;--card:#FFFFFF;--ink:#121417;--sub:#60666E;--line:#E2E4E1;--soft:#E9EBE8;
- --c-interval:#FF5B21;--c-recovery:#5FD896;--c-warmup:#8DBFFF;--c-cooldown:#8DBFFF;--c-paused:#C8CCD1;
- --run-ink:#121417;
- --r-lg:28px;--r-md:18px;--r-sm:10px;
+ --s-2xs:4px;--s-xs:8px;--s-s:16px;--s-m:24px;--s-l:32px;--s-xl:48px;--s-2xl:80px;
+ --t-sm:14px;--t-base:17px;--t-md:21px;--t-lg:27px;--t-xl:33px;--t-2xl:41px;--t-3xl:52px;
+ --w-regular:400;--w-bold:700;--w-display:800;
+ --bg:#F3F4F2;--surface:#FFFFFF;--text:#1C1F23;--text-2:#5C6269;--border-strong:#7C828A;--border:#E2E4E1;--press:#E9EBE8;
+ --danger:#B3261E;
+ --c-interval:#FF6B2C;--c-recovery:#5FD896;--c-warmup:#8DBFFF;--c-paused:#C8CCD1;
+ --m-interval:#D9480F;--m-recovery:#1B8F53;--m-warmup:#2F74D0;
+ --run-text:#121417;--run-text-2:rgba(18,20,23,.8);--run-border:rgba(18,20,23,.7);
+ --r-s:8px;--r-m:16px;--r-l:24px;
  --font:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
  color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root{--paper:#0E1012;--card:#181B1F;--ink:#F1F2EF;--sub:#9AA1A9;--line:#262A2F;--soft:#20242A;color-scheme:dark}}
+@media (prefers-color-scheme:dark){:root{
+ --bg:#0E1012;--surface:#181B1F;--text:#EEEFEC;--text-2:#9AA1A9;--border-strong:#6B7078;--border:#262A2F;--press:#20242A;
+ --danger:#FF8A7A;--m-interval:#FF6B2C;--m-recovery:#5FD896;--m-warmup:#8DBFFF;color-scheme:dark}}
 *{box-sizing:border-box}[hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%;background:var(--paper)}
-body{margin:0;font-family:var(--font);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;transition:background-color .45s ease}
+html{-webkit-text-size-adjust:100%;background:var(--bg)}
+body{margin:0;font-family:var(--font);font-size:var(--t-base);line-height:1.5;font-weight:var(--w-regular);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;transition:background-color .45s ease}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-button:focus-visible,summary:focus-visible{outline:3px solid currentColor;outline-offset:3px;border-radius:12px}
-.num{font-variant-numeric:tabular-nums;font-stretch:70%;font-variation-settings:"wdth" 70}
-.screen{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 20px calc(env(safe-area-inset-bottom) + 132px);min-height:100vh;min-height:100svh}
+button:focus-visible,summary:focus-visible{outline:3px solid currentColor;outline-offset:3px;border-radius:var(--r-s)}
+.num{font-variant-numeric:tabular-nums}
+.screen{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + var(--s-s)) var(--s-m) calc(env(safe-area-inset-bottom) + 136px);min-height:100vh;min-height:100svh}
 
-/* ---------- příprava ---------- */
-.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--sub)}
-.brand i{width:10px;height:10px;border-radius:3px;background:var(--c-interval);display:inline-block}
-.kicker{margin:34px 0 6px;font-size:15px;color:var(--sub)}
-h1{margin:0;font-size:44px;line-height:.98;font-weight:800;font-stretch:72%;font-variation-settings:"wdth" 72;letter-spacing:-.01em}
-.facts{display:flex;gap:28px;margin:26px 0 22px}
-.fact b{display:block;font-size:40px;line-height:1;font-weight:750}
-.fact span{font-size:13px;color:var(--sub)}
-.strip{display:flex;gap:3px;height:44px;align-items:stretch}
-.strip i{border-radius:5px;min-width:3px;background:var(--seg)}
-.strip i[data-type=interval]{--seg:var(--c-interval)}.strip i[data-type=recovery]{--seg:var(--c-recovery)}
-.strip i[data-type=warmup],.strip i[data-type=cooldown]{--seg:var(--c-warmup)}
-.legend{display:flex;gap:16px;margin:10px 0 0;font-size:13px;color:var(--sub)}
-.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;background:var(--seg)}
-.legend .l1{--seg:var(--c-warmup)}.legend .l2{--seg:var(--c-interval)}.legend .l3{--seg:var(--c-recovery)}
+/* tlačítka: primární, sekundární, terciární */
+.btn{display:flex;align-items:center;justify-content:center;gap:var(--s-xs);min-height:48px;border-radius:999px;font-weight:var(--w-bold);font-size:var(--t-base);transition:transform .12s,background-color .12s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--text);color:var(--bg);height:64px;font-size:var(--t-md);width:100%}
+.btn-tertiary{min-height:48px;padding:0 var(--s-xs);font-weight:var(--w-bold);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px}
+.btn-tertiary.danger{color:var(--danger)}
 
-.panel{background:var(--card);border-radius:var(--r-md);margin-top:12px}
-.panels{margin-top:34px}
-summary{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:18px;font-weight:650;font-size:16px;cursor:pointer}
+/* příprava */
+.brand{display:flex;align-items:center;gap:var(--s-xs);min-height:32px;font-weight:var(--w-bold);font-size:var(--t-sm);color:var(--text-2)}
+.brand i{width:10px;height:10px;border-radius:3px;background:var(--m-interval)}
+.kicker{margin:var(--s-l) 0 var(--s-xs);color:var(--text-2)}
+h1{margin:0;font-size:var(--t-2xl);line-height:1.05;font-weight:var(--w-bold);font-stretch:72%;font-variation-settings:"wdth" 72;letter-spacing:-.015em}
+.facts{display:flex;gap:var(--s-l);margin:var(--s-m) 0}
+.fact b{display:block;font-size:var(--t-2xl);line-height:1.1;font-weight:var(--w-bold);font-stretch:72%;font-variation-settings:"wdth" 72;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.fact span{font-size:var(--t-sm);color:var(--text-2)}
+.strip{display:flex;gap:3px;height:40px}
+.strip i{border-radius:4px;min-width:3px;background:var(--seg)}
+[data-type=interval]{--seg:var(--m-interval)}[data-type=recovery]{--seg:var(--m-recovery)}[data-type=warmup],[data-type=cooldown]{--seg:var(--m-warmup)}
+.legend{display:flex;flex-wrap:wrap;gap:var(--s-xs) var(--s-s);margin-top:var(--s-xs);font-size:var(--t-sm);color:var(--text-2)}
+.legend span{display:flex;align-items:center;gap:var(--s-xs)}
+.legend span::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--seg)}
+.legend .l1{--seg:var(--m-warmup)}.legend .l2{--seg:var(--m-interval)}.legend .l3{--seg:var(--m-recovery)}
+.panels{margin-top:var(--s-xl);display:flex;flex-direction:column;gap:var(--s-xs)}
+.panel{background:var(--surface);border-radius:var(--r-m)}
+summary{list-style:none;display:flex;align-items:center;gap:var(--s-s);min-height:56px;padding:0 var(--s-s);font-weight:var(--w-bold);cursor:pointer}
 summary::-webkit-details-marker{display:none}
-summary .cnt{color:var(--sub);font-weight:500;font-size:14px;margin-left:auto;margin-right:12px}
-summary svg{transition:transform .2s;color:var(--sub)}details[open] summary svg{transform:rotate(90deg)}
-.plan{list-style:none;margin:0;padding:0 18px 14px}
-.plan li{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:15px}
+summary .cnt{color:var(--text-2);font-weight:var(--w-regular);font-size:var(--t-sm);margin-left:auto}
+summary svg{transition:transform .2s;color:var(--text-2)}details[open] summary svg{transform:rotate(90deg)}
+.plan{list-style:none;margin:0;padding:0 var(--s-s) var(--s-xs)}
+.plan li{display:grid;grid-template-columns:10px 1fr auto;align-items:center;gap:var(--s-s);min-height:44px;border-top:1px solid var(--border)}
 .plan li::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--seg)}
-.plan li[data-type=interval]{--seg:var(--c-interval)}.plan li[data-type=recovery]{--seg:var(--c-recovery)}.plan li[data-type=warmup],.plan li[data-type=cooldown]{--seg:var(--c-warmup)}
-.plan .sh{grid-column:1/-1;display:block;font-size:13px;color:var(--sub);padding:14px 0 2px;border:0}
+.plan .sh{display:block;min-height:0;padding:var(--s-s) 0 var(--s-2xs);border:0;font-size:var(--t-sm);font-weight:var(--w-bold);color:var(--text-2)}
 .plan .sh::before{display:none}
-.plan .v{color:var(--sub)}
-.hist{padding:0 8px 8px}
-.hist button{display:grid;grid-template-columns:62px 1fr auto;align-items:center;gap:10px;width:100%;text-align:left;padding:12px 10px;border-radius:12px}
-.hist button:active{background:var(--soft)}
-.hist .d{font-weight:750;font-size:18px}.hist .n{font-size:14px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hist .t{font-size:16px;font-weight:650}
-.hint{font-size:13px;color:var(--sub);text-align:center;margin:22px 12px 0;line-height:1.5}
-.err{margin-top:20px;color:var(--sub);font-size:15px;line-height:1.5}
+.plan .v{color:var(--text-2)}
+.hist{padding:0 var(--s-xs) var(--s-xs)}
+.hist button{display:grid;grid-template-columns:56px 1fr auto;align-items:center;gap:var(--s-s);width:100%;min-height:56px;text-align:left;padding:0 var(--s-xs);border-radius:var(--r-s)}
+.hist button:active{background:var(--press)}
+.hist .d{font-weight:var(--w-bold)}.hist .n{font-size:var(--t-sm);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hist .t{font-weight:var(--w-bold)}
+.hints{list-style:none;margin:var(--s-m) 0 0;padding:0;display:flex;flex-direction:column;gap:var(--s-xs);font-size:var(--t-sm);color:var(--text-2)}
+.hints li{display:flex;gap:var(--s-xs);align-items:flex-start}
+.hints svg{flex:0 0 18px;margin-top:2px}
+.err,.loading-line{margin-top:var(--s-m);color:var(--text-2)}
+.dock{position:fixed;left:0;right:0;bottom:0;padding:var(--s-m) var(--s-m) calc(env(safe-area-inset-bottom) + var(--s-s));background:linear-gradient(to bottom,transparent,var(--bg) 40%);z-index:5}
+.dock .btn{max-width:512px;margin:0 auto}
 
-.dock{position:fixed;left:0;right:0;bottom:0;padding:22px 20px calc(env(safe-area-inset-bottom) + 18px);background:linear-gradient(to bottom,transparent,var(--paper) 40%);z-index:5}
-.btn-big{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:520px;height:66px;margin:0 auto;border-radius:999px;background:var(--ink);color:var(--paper);font-size:21px;font-weight:750;font-stretch:90%;transition:transform .12s}
-.btn-big:active{transform:scale(.97)}
-.btn-big:disabled{opacity:.3}
-.btn-text{display:block;margin:16px auto 0;color:var(--sub);font-size:15px;padding:8px 14px}
-
-/* ---------- běh ---------- */
+/* běh */
 body[data-phase=interval]{--phase:var(--c-interval)}body[data-phase=recovery]{--phase:var(--c-recovery)}
 body[data-phase=warmup],body[data-phase=cooldown]{--phase:var(--c-warmup)}body[data-phase=paused]{--phase:var(--c-paused)}
-body[data-state=running],body[data-state=paused]{background:var(--phase);color:var(--run-ink)}
+body[data-state=running],body[data-state=paused]{background:var(--phase);color:var(--run-text)}
 html:has(body[data-state=running]),html:has(body[data-state=paused]){background:var(--phase)}
-.run{display:flex;flex-direction:column;padding-bottom:calc(env(safe-area-inset-bottom) + 22px);color:var(--run-ink)}
-.rstrip{display:flex;gap:2px;height:6px}
-.rstrip i{border-radius:3px;min-width:2px;background:rgba(18,20,23,.16)}
-.rstrip i.done{background:rgba(18,20,23,.75)}
-.rstrip i.cur{background:linear-gradient(to right,rgba(18,20,23,.75) var(--p,0%),rgba(18,20,23,.16) var(--p,0%))}
-.rmeta{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;font-size:16px;font-weight:650}
-.rmeta .tot{font-weight:500;opacity:.7}
-.rmain{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4vh 0}
-.rphase{font-size:16px;font-weight:650;opacity:.72}
-.rname{margin:4px 0 0;font-size:34px;line-height:1.02;font-weight:800;font-stretch:78%;font-variation-settings:"wdth" 78;letter-spacing:-.01em}
-.clock{white-space:nowrap;overflow:hidden;font-size:min(44vw,236px);line-height:.86;font-weight:850;letter-spacing:-.025em;margin:2vh 0 0;font-stretch:62%;font-variation-settings:"wdth" 62;font-variant-numeric:tabular-nums}
-.clock small{font-size:.28em;font-weight:700;letter-spacing:0;margin-left:.15em}
+.run{display:flex;flex-direction:column;padding-bottom:calc(env(safe-area-inset-bottom) + var(--s-m));color:var(--run-text)}
+.rstrip{display:flex;gap:2px;height:8px}
+.rstrip i{border-radius:2px;min-width:2px;background:rgba(18,20,23,.16)}
+.rstrip i.done{background:var(--run-text-2)}
+.rstrip i.cur{background:linear-gradient(to right,var(--run-text-2) var(--p,0%),rgba(18,20,23,.16) var(--p,0%))}
+.rmeta{display:flex;justify-content:space-between;align-items:center;min-height:32px;margin-top:var(--s-xs);font-weight:var(--w-bold)}
+.rmeta .tot{font-weight:var(--w-regular);color:var(--run-text-2)}
+.rmain{flex:1;display:flex;flex-direction:column;justify-content:center;padding:var(--s-m) 0}
+.rphase{font-weight:var(--w-bold);color:var(--run-text-2);min-height:26px}
+.rname{margin:0;font-size:var(--t-xl);line-height:1.1;font-weight:var(--w-bold);font-stretch:78%;font-variation-settings:"wdth" 78;letter-spacing:-.01em}
+.clock{white-space:nowrap;overflow:hidden;font-size:min(44vw,236px);line-height:.86;font-weight:var(--w-display);letter-spacing:-.025em;margin-top:var(--s-s);font-stretch:62%;font-variation-settings:"wdth" 62;font-variant-numeric:tabular-nums}
+.clock small{font-size:.28em;font-weight:var(--w-bold);letter-spacing:0;margin-left:.15em}
 .clock.tick{animation:tick .5s ease-out}
 @keyframes tick{0%{transform:scale(1.04)}100%{transform:scale(1)}}
-.sbar{height:6px;background:rgba(18,20,23,.14);border-radius:6px;overflow:hidden;margin-top:18px}
-.sbar i{display:block;height:100%;width:0;background:var(--run-ink);border-radius:6px;transition:width .25s linear}
-.live{margin-top:12px;font-size:17px;font-weight:600;min-height:24px;opacity:.82}
-.upnext{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.34);border-radius:var(--r-md);padding:14px 16px;font-size:16px}
-.upnext .lab{opacity:.65}.upnext b{flex:1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.upnext .v{font-weight:700}
-.controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:22px}
-.ctl{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;font-weight:650}
-.ctl .c{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;background:rgba(18,20,23,.12);position:relative}
-.ctl:active .c{background:rgba(18,20,23,.22)}
-.ctl:disabled{opacity:.35}
-.main{width:88px;height:88px;border-radius:50%;background:var(--run-ink);color:var(--phase);display:grid;place-items:center;transition:transform .12s;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.sbar{height:8px;background:rgba(18,20,23,.16);border-radius:4px;overflow:hidden;margin-top:var(--s-m)}
+.sbar i{display:block;height:100%;width:0;background:var(--run-text);border-radius:4px;transition:width .25s linear}
+.live{margin-top:var(--s-s);font-weight:var(--w-bold);min-height:26px;color:var(--run-text-2);font-variant-numeric:tabular-nums}
+.upnext{display:flex;align-items:center;gap:var(--s-s);min-height:56px;background:rgba(255,255,255,.4);border-radius:var(--r-m);padding:0 var(--s-s)}
+.upnext .lab{color:var(--run-text-2)}.upnext b{flex:1;font-weight:var(--w-bold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.upnext .v{font-weight:var(--w-bold)}
+.controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;margin-top:var(--s-m)}
+.ctl{display:flex;flex-direction:column;align-items:center;gap:var(--s-xs);font-size:var(--t-sm);font-weight:var(--w-bold);min-width:96px}
+.ctl .c{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--run-border);position:relative}
+.ctl:active .c{background:rgba(18,20,23,.12)}
+.ctl.gone{visibility:hidden}
+.main{width:88px;height:88px;border-radius:50%;background:var(--run-text);color:var(--phase);display:grid;place-items:center;transition:transform .12s}
 .main:active{transform:scale(.94)}
-.hold svg.ring{position:absolute;inset:-4px;width:68px;height:68px;transform:rotate(-90deg)}
-.hold svg.ring circle{fill:none;stroke:var(--run-ink);stroke-width:4;stroke-dasharray:201;stroke-dashoffset:201;transition:stroke-dashoffset .15s}
+.hold svg.ring{position:absolute;inset:-6px;width:72px;height:72px;transform:rotate(-90deg)}
+.hold svg.ring circle{fill:none;stroke:var(--run-text);stroke-width:4;stroke-dasharray:214;stroke-dashoffset:214;transition:stroke-dashoffset .15s}
 .hold.holding svg.ring circle{stroke-dashoffset:0;transition:stroke-dashoffset .9s linear}
 
-/* ---------- hodnocení série ---------- */
-.scrim{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:9;animation:fade .25s}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--card);color:var(--ink);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:12px 20px calc(env(safe-area-inset-bottom) + 18px);animation:up .3s cubic-bezier(.2,.9,.3,1)}
-.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 16px}
-.sheet .inner{max-width:520px;margin:0 auto}
-.sheet h2{margin:0;font-size:26px;font-weight:800;font-stretch:80%;font-variation-settings:"wdth" 80}
-.sheet p{margin:6px 0 0;color:var(--sub);font-size:14px}
-.rpe{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0 6px}
-.rpe button{height:58px;border-radius:14px;font-size:24px;font-weight:800;background:hsl(var(--h) 85% 88%);color:#121417;font-stretch:75%}
+/* hodnocení série */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9;animation:fade .25s}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);color:var(--text);border-radius:var(--r-l) var(--r-l) 0 0;padding:var(--s-xs) var(--s-m) calc(env(safe-area-inset-bottom) + var(--s-s));animation:up .3s cubic-bezier(.2,.9,.3,1)}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--border-strong);margin:0 auto var(--s-m)}
+.sheet .inner{max-width:512px;margin:0 auto}
+.sheet h2{margin:0;font-size:var(--t-lg);line-height:1.2;font-weight:var(--w-bold);font-stretch:80%;font-variation-settings:"wdth" 80}
+.sheet p{margin:var(--s-2xs) 0 0;color:var(--text-2)}
+.rpe{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--s-xs);margin:var(--s-m) 0 var(--s-xs)}
+.rpe button{height:56px;border-radius:var(--r-s);font-size:var(--t-md);font-weight:var(--w-bold);background:hsl(var(--h) 80% 86%);color:#121417}
 .rpe button:active{transform:scale(.94)}
-.rpe-scale{display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+.rpe-scale{display:flex;justify-content:space-between;font-size:var(--t-sm);color:var(--text-2)}
+.sheet .btn-tertiary{margin:var(--s-xs) auto 0;display:block}
 @keyframes up{from{transform:translateY(100%)}to{transform:none}}
 @keyframes fade{from{opacity:0}}
 
-/* ---------- souhrn ---------- */
-.back{display:inline-flex;align-items:center;gap:6px;color:var(--sub);font-size:15px;font-weight:600;padding:6px 0}
-.dstats{display:flex;gap:28px;margin:22px 0 0}
-.insight{margin-top:24px;background:var(--card);border-radius:var(--r-md);padding:16px 18px;font-size:16px;line-height:1.45;display:flex;gap:12px}
-.insight::before{content:"";flex:0 0 4px;border-radius:4px;background:var(--accent,var(--c-recovery))}
-.tbl{margin-top:12px;background:var(--card);border-radius:var(--r-md);padding:14px 16px 6px}
-.tbl h3{margin:0 0 4px;font-size:14px;font-weight:600;color:var(--sub)}
+/* souhrn */
+.back{display:inline-flex;align-items:center;gap:var(--s-xs);min-height:48px;color:var(--text-2);font-weight:var(--w-bold);margin-left:calc(-1 * var(--s-xs));padding:0 var(--s-xs)}
+.dstats{display:flex;gap:var(--s-l);margin:var(--s-m) 0 0}
+.section{margin-top:var(--s-l)}
+.section h3{margin:0 0 var(--s-xs);font-size:var(--t-sm);font-weight:var(--w-bold);color:var(--text-2)}
+.insight{background:var(--surface);border-radius:var(--r-m);padding:var(--s-s);display:flex;gap:var(--s-s)}
+.insight::before{content:"";flex:0 0 4px;border-radius:2px;background:var(--accent,var(--m-recovery))}
+.card{background:var(--surface);border-radius:var(--r-m);padding:0 var(--s-s)}
 .grid{display:grid;align-items:stretch}
-.grid>div{padding:10px 0;border-top:1px solid var(--line);font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;min-height:48px}
-.grid>.hd{border-top:0;font-size:13px;font-weight:600;color:var(--sub);padding:6px 0;min-height:0}
-.grid>.rl{justify-content:flex-start;font-size:15px;font-weight:600}
-.grid .mut{color:var(--sub);font-weight:500}
-.pill{display:inline-grid;place-items:center;min-width:30px;height:26px;padding:0 6px;border-radius:8px;font-size:15px;background:hsl(var(--h) 85% 88%);color:#121417}
-.rows{margin-top:12px;background:var(--card);border-radius:var(--r-md);padding:4px 16px}
-.rows .r{display:flex;align-items:baseline;gap:10px;padding:12px 0;border-top:1px solid var(--line);font-size:16px}
+.grid>div{display:flex;align-items:center;justify-content:flex-end;min-height:48px;border-top:1px solid var(--border);font-size:var(--t-md);font-weight:var(--w-bold);font-variant-numeric:tabular-nums}
+.grid>.hd{min-height:40px;border-top:0;font-size:var(--t-sm);color:var(--text-2)}
+.grid>.rl{justify-content:flex-start;font-size:var(--t-base)}
+.grid .mut{color:var(--text-2);font-weight:var(--w-regular)}
+.pill{display:inline-grid;place-items:center;min-width:32px;height:32px;padding:0 var(--s-xs);border-radius:var(--r-s);font-size:var(--t-base);background:hsl(var(--h) 80% 86%);color:#121417}
+.rows .r{display:flex;align-items:center;gap:var(--s-s);min-height:56px;border-top:1px solid var(--border)}
 .rows .r:first-child{border-top:0}
-.rows .r b{flex:1;font-weight:600}.rows .r span{color:var(--sub);font-size:14px}.rows .r em{font-style:normal;font-weight:700;min-width:84px;text-align:right}
-.note{font-size:13px;color:var(--sub);margin:12px 4px 0;line-height:1.5}
-.del{color:#d24a3a}
+.rows .r b{flex:1}.rows .r span{color:var(--text-2);font-size:var(--t-sm)}.rows .r em{font-style:normal;font-weight:var(--w-bold);text-align:right;min-width:80px}
+.note{font-size:var(--t-sm);color:var(--text-2);margin:var(--s-xs) 0 0}
+.del-wrap{margin-top:var(--s-l)}
+
+/* oznámení s možností vrátit */
+.toast{position:fixed;left:var(--s-s);right:var(--s-s);bottom:calc(env(safe-area-inset-bottom) + 104px);z-index:20;max-width:512px;margin:0 auto;display:flex;align-items:center;gap:var(--s-s);min-height:56px;padding:0 var(--s-xs) 0 var(--s-s);border-radius:var(--r-m);background:var(--text);color:var(--bg);animation:fade .2s}
+.toast span{flex:1}.toast button{min-height:48px;padding:0 var(--s-s);font-weight:var(--w-bold);text-decoration:underline;text-underline-offset:4px}
 
 @media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
-@media (max-height:700px){.clock{font-size:min(40vw,190px)}.rname{font-size:28px}.rmain{padding:2vh 0}.controls{margin-top:14px}}
+@media (max-height:700px){.clock{font-size:min(40vw,190px)}.rname{font-size:var(--t-lg)}.rmain{padding:var(--s-xs) 0}.controls{margin-top:var(--s-s)}.upnext{min-height:48px}}
 </style>
 </head>
 <body data-state="loading">
@@ -153,28 +173,32 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
 <!-- PŘÍPRAVA -->
 <section class="screen" id="readyScreen" data-only="loading error ready">
  <div class="brand"><i></i>TRImates Run</div>
- <p class="kicker" id="rKicker">Načítám trénink…</p>
+ <p class="kicker" id="rKicker">&nbsp;</p>
  <h1 id="rName">&nbsp;</h1>
+ <p class="loading-line" data-only="loading">Načítám trénink z GitHubu…</p>
  <div data-only="ready">
   <div class="facts" id="rFacts"></div>
   <div class="strip" id="rStrip" aria-hidden="true"></div>
   <div class="legend"><span class="l1">Rozklus a výklus</span><span class="l2">Interval</span><span class="l3">Meziklus</span></div>
   <div class="panels">
    <details class="panel" id="planBox">
-    <summary>Průběh tréninku<span class="cnt" id="planCount"></span><svg width="9" height="14" viewBox="0 0 9 14"><path d="M1.5 1.5 7 7l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+    <summary>Průběh tréninku<span class="cnt" id="planCount"></span><svg width="9" height="14" viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5 7 7l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
     <ol class="plan" id="planList"></ol>
    </details>
    <details class="panel" id="histBox">
-    <summary>Historie<span class="cnt" id="histCount"></span><svg width="9" height="14" viewBox="0 0 9 14"><path d="M1.5 1.5 7 7l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+    <summary>Historie<span class="cnt" id="histCount"></span><svg width="9" height="14" viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5 7 7l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
     <div class="hist" id="histList"></div>
    </details>
   </div>
-  <p class="hint">Při startu povol polohu, aplikace z ní měří tempo úseků. Displej nech zapnutý – po zamčení iPhone ztiší hlas i GPS.</p>
+  <ul class="hints">
+   <li><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 5v5M9 12.6v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Při startu povol polohu, měří se z ní tempo úseků</span></li>
+   <li><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 5v5M9 12.6v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Displej nech zapnutý, po zamčení iPhone ztlumí hlas i GPS</span></li>
+  </ul>
  </div>
- <p class="err" id="errText" data-only="error">Trénink se nepodařilo načíst. Zkontroluj připojení k internetu a že je v repozitáři nahraný soubor workout.json.</p>
+ <p class="err" data-only="error">Trénink se nepodařilo načíst. Zkontroluj připojení k internetu a že je v repozitáři soubor workout.json.</p>
  <div class="dock">
-  <button class="btn-big" id="startBtn" data-only="ready loading"><svg width="20" height="22" viewBox="0 0 20 22"><path d="M2 2.6v16.8a1.5 1.5 0 0 0 2.3 1.3l13.4-8.4a1.5 1.5 0 0 0 0-2.6L4.3 1.3A1.5 1.5 0 0 0 2 2.6Z" fill="currentColor"/></svg>Start</button>
-  <button class="btn-big" id="retryBtn" data-only="error">Zkusit znovu</button>
+  <button class="btn btn-primary" id="startBtn" data-only="ready"><svg width="18" height="20" viewBox="0 0 20 22" aria-hidden="true"><path d="M2 2.6v16.8a1.5 1.5 0 0 0 2.3 1.3l13.4-8.4a1.5 1.5 0 0 0 0-2.6L4.3 1.3A1.5 1.5 0 0 0 2 2.6Z" fill="currentColor"/></svg>Spustit trénink</button>
+  <button class="btn btn-primary" id="retryBtn" data-only="error">Načíst trénink znovu</button>
  </div>
 </section>
 
@@ -196,7 +220,7 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
    <svg id="icPause" width="26" height="30" viewBox="0 0 26 30"><rect x="2" y="1" width="8" height="28" rx="2.5" fill="currentColor"/><rect x="16" y="1" width="8" height="28" rx="2.5" fill="currentColor"/></svg>
    <svg id="icPlay" width="28" height="30" viewBox="0 0 20 22" style="display:none"><path d="M2 2.6v16.8a1.5 1.5 0 0 0 2.3 1.3l13.4-8.4a1.5 1.5 0 0 0 0-2.6L4.3 1.3A1.5 1.5 0 0 0 2 2.6Z" fill="currentColor"/></svg>
   </button>
-  <button class="ctl hold" id="stopBtn"><span class="c"><svg class="ring" viewBox="0 0 68 68"><circle cx="34" cy="34" r="32"/></svg><svg width="18" height="18" viewBox="0 0 18 18"><rect width="18" height="18" rx="3.5" fill="currentColor"/></svg></span><span id="stopLab">Podrž = konec</span></button>
+  <button class="ctl hold" id="stopBtn"><span class="c"><svg class="ring" viewBox="0 0 68 68"><circle cx="34" cy="34" r="32"/></svg><svg width="18" height="18" viewBox="0 0 18 18"><rect width="18" height="18" rx="3.5" fill="currentColor"/></svg></span><span id="stopLab">Podrž pro konec</span></button>
  </div>
 </section>
 
@@ -206,13 +230,14 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
  <p class="kicker" id="dKicker"></p>
  <h1 id="dTitle">Hotovo</h1>
  <div class="dstats" id="dStats"></div>
- <div class="insight" id="insight" hidden></div>
- <div class="tbl" id="seriesTbl" hidden><h3>Tempo v sériích (min/km)</h3><div class="grid" id="seriesGrid"></div></div>
- <div class="rows" id="otherRows" hidden></div>
- <p class="note" id="dNote" hidden></p>
- <button class="btn-text del" id="deleteBtn" hidden>Smazat z historie</button>
- <div class="dock"><button class="btn-big" id="closeBtn">Hotovo</button></div>
+ <div class="section" id="insightSec" hidden><div class="insight" id="insight"></div></div>
+ <div class="section" id="seriesTbl" hidden><h3>Tempo v sériích, min/km</h3><div class="card"><div class="grid" id="seriesGrid"></div></div><p class="note" id="dNote" hidden></p></div>
+ <div class="section" id="otherSec" hidden><h3>Rozklus a výklus</h3><div class="card rows" id="otherRows"></div></div>
+ <div class="del-wrap"><button class="btn-tertiary danger" id="deleteBtn" hidden>Smazat z historie</button></div>
+ <div class="dock"><button class="btn btn-primary" id="closeBtn">Zpět na přehled</button></div>
 </section>
+
+<div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button id="toastUndo">Vrátit</button></div>
 
 <!-- HODNOCENÍ SÉRIE -->
 <div class="scrim" id="rpeScrim" hidden></div>
@@ -220,10 +245,10 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
  <div class="inner">
   <div class="grab"></div>
   <h2 id="rpeTitle">Jak těžká byla série?</h2>
-  <p>Ťukni na číslo. Můžeš běžet dál.</p>
+  <p>Ťukni na číslo a běž dál</p>
   <div class="rpe" id="rpeGrid"></div>
   <div class="rpe-scale"><span>lehké</span><span>na hraně</span></div>
-  <button class="btn-text" id="rpeSkip">Přeskočit</button>
+  <button class="btn-tertiary" id="rpeSkip">Přeskočit hodnocení</button>
  </div>
 </div>
 
@@ -255,7 +280,6 @@ function setState(s){
  document.querySelectorAll("[data-only]").forEach(el=>{el.hidden=!el.dataset.only.split(" ").includes(s)});
  if(s==="ready")$("histBox").hidden=!hist.length;
  if(s!=="running"&&s!=="paused"){document.body.dataset.phase="";setTheme(null)}
- $("startBtn").disabled=s==="loading";
  render();
 }
 function setTheme(c){$("themeColor").content=c||getComputedStyle(document.body).backgroundColor||"#F3F4F2"}
@@ -317,13 +341,13 @@ function buildStrip(el){
  workout.forEach(s=>{const i=document.createElement("i");i.dataset.type=s.type;i.style.flexGrow=estSec(s);el.appendChild(i)});
 }
 function buildReady(){
- $("rKicker").textContent=workoutDate?"Trénink na "+workoutDate:"Dnešní trénink";
+ $("rKicker").textContent=workoutDate?"Trénink na "+workoutDate.replace(/^(\d+)\.(\d+)\.\d+$/,"$1. $2."):"Dnešní trénink";
  $("rName").textContent=workoutName;
  const total=workout.reduce((a,s)=>a+estSec(s),0);
  const dist=workout.reduce((a,s)=>a+(s.kind==="distance"?s.meters:0),0);
  const f=[["≈ "+Math.round(total/60),"minut"]];
  if(seriesCount)f.push([seriesCount,seriesCount<5?"série":"sérií"]);
- f.push([workout.filter(s=>s.type==="interval").length,"úseků v tempu"]);
+ if(dist)f.push([kmNum(dist),"km klusu a chůze"]);
  $("rFacts").innerHTML=f.map(([a,b])=>`<div class="fact"><b class="num">${esc(a)}</b><span>${esc(b)}</span></div>`).join("");
  buildStrip($("rStrip"));buildStrip($("runStrip"));
  const pl=$("planList");pl.innerHTML="";let lastS=-1;
@@ -506,7 +530,7 @@ function render(){
  $("upNext").querySelector(".lab").textContent=n?"Další":"Potom";
  $("icPause").style.display=state==="paused"?"none":"";$("icPlay").style.display=state==="paused"?"":"none";
  $("pauseBtn").setAttribute("aria-label",state==="paused"?"Pokračovat":"Pauza");
- $("nextBtn").disabled=state==="paused";
+ $("nextBtn").classList.toggle("gone",state==="paused");
  $("nextLab").textContent=s.kind==="distance"?"Úsek hotový":"Další úsek";
 }
 
@@ -571,23 +595,23 @@ function openSummary(r,fromHistory){
  // rozklus, výklus a ostatní úseky mimo série
  const other=r.results.filter(x=>!x.series&&x.type!=="recovery");
  $("otherRows").innerHTML=other.map(x=>`<div class="r"><b>${esc(x.name)}</b><span class="num">${fmt(x.sec)}${x.ok&&x.m?" · "+km(x.m):""}</span><em class="num">${x.ok&&paceSec(x.sec,x.m)?paceTxt(x.sec,x.m)+" /km":"—"}</em></div>`).join("");
- $("otherRows").hidden=!other.length;
+ $("otherSec").hidden=!other.length;
 
  // trenérský postřeh: první vs. poslední série
- const ins=$("insight");ins.hidden=true;
+ const ins=$("insight");$("insightSec").hidden=true;
  if(keys.length>=2){
   const a=bySer[keys[0]],b=bySer[keys[keys.length-1]];let sa=0,sb=0,n=0;
   for(let c=0;c<Math.min(a.length,b.length);c++){const pa=a[c].ok&&paceSec(a[c].sec,a[c].m),pb=b[c].ok&&paceSec(b[c].sec,b[c].m);if(pa&&pb){sa+=pa;sb+=pb;n++}}
   if(n){
    const d=Math.round((sb-sa)/n);let t,col;
-   if(Math.abs(d)<=3){t="Poslední série byla stejně rychlá jako první. Přesně tak to má být.";col="var(--c-recovery)"}
-   else if(d>0){t=`Poslední série byla o ${d} s/km pomalejší než první. Příště začni první úsek o kousek volněji.`;col="var(--c-interval)"}
-   else{t=`Poslední série byla o ${-d} s/km rychlejší než první. Máš rezervu – příště můžeš začít svižněji.`;col="var(--c-warmup)"}
-   ins.textContent=t;ins.style.setProperty("--accent",col);ins.hidden=false;
+   if(Math.abs(d)<=3){t="Poslední série byla stejně rychlá jako první. Přesně tak to má být.";col="var(--m-recovery)"}
+   else if(d>0){t=`Poslední série byla o ${d} s/km pomalejší než první. Příště začni první úsek o kousek volněji.`;col="var(--m-interval)"}
+   else{t=`Poslední série byla o ${-d} s/km rychlejší než první. Máš rezervu – příště můžeš začít svižněji.`;col="var(--m-warmup)"}
+   ins.textContent=t;ins.style.setProperty("--accent",col);$("insightSec").hidden=false;
   }
  }
  const missing=r.results.some(x=>x.type!=="recovery"&&!(x.ok&&paceSec(x.sec,x.m)));
- $("dNote").textContent=missing?"Pomlčka znamená, že GPS nemělo dost dat – slabý signál nebo zamčený displej.":"";
+ $("dNote").textContent=missing?"Pomlčka znamená, že GPS nemělo dost dat, nejčastěji kvůli slabému signálu nebo zamčenému displeji":"";
  $("dNote").hidden=!missing;
  setState("done");scrollTo(0,0);
 }
@@ -604,9 +628,17 @@ function renderHistory(){
 function closeSummary(){hideRpe();setState("ready");scrollTo(0,0)}
 $("closeBtn").addEventListener("click",closeSummary);
 $("backBtn").addEventListener("click",closeSummary);
+// smazání bez potvrzovacího dialogu – místo něj možnost vrátit
+let toastT=null,undoFn=null;
+function toast(text,undo){
+ $("toastText").textContent=text;undoFn=undo;$("toastUndo").hidden=!undo;$("toast").hidden=false;
+ clearTimeout(toastT);toastT=setTimeout(()=>{$("toast").hidden=true;undoFn=null},6000);
+}
+$("toastUndo").addEventListener("click",()=>{if(undoFn)undoFn();$("toast").hidden=true;undoFn=null});
 $("deleteBtn").addEventListener("click",()=>{
- if(!confirm("Smazat tento trénink z historie?"))return;
- hist=hist.filter(r=>r.id!==run.id);store.set("history",hist);renderHistory();closeSummary();
+ const removed=run,pos=hist.findIndex(r=>r.id===removed.id);
+ hist=hist.filter(r=>r.id!==removed.id);store.set("history",hist);renderHistory();closeSummary();
+ toast("Trénink smazán z historie",()=>{hist.splice(pos,0,removed);store.set("history",hist);renderHistory();setState("ready")});
 });
 
 // ---------- ovládání ----------
@@ -620,7 +652,7 @@ $("nextBtn").addEventListener("click",nextManual);
  const cancel=()=>{clearTimeout(t);t=null;b.classList.remove("holding")};
  b.addEventListener("pointerdown",e=>{e.preventDefault();b.classList.add("holding");t=setTimeout(()=>{cancel();if(navigator.vibrate)navigator.vibrate(60);stopWorkout()},900)});
  ["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev,()=>{
-  if(t){cancel();$("stopLab").textContent="Drž déle";setTimeout(()=>$("stopLab").textContent="Podrž = konec",1400)}
+  if(t){cancel();$("stopLab").textContent="Drž déle";setTimeout(()=>$("stopLab").textContent="Podrž pro konec",1400)}
  }));
  b.addEventListener("contextmenu",e=>e.preventDefault());
  b.addEventListener("keydown",e=>{if(e.key==="Enter"&&confirm("Ukončit trénink?"))stopWorkout()});
