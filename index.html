@@ -3,451 +3,635 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b1020">
+<meta name="theme-color" content="#F3F4F2" id="themeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TRImates">
 <link rel="apple-touch-icon" href="data:image/png;base64,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">
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
 <title>TRImates Run</title>
 <style>
-:root{color-scheme:dark;--bg:#0b1020;--panel:#151d30;--muted:#9aa8bd;--text:#f5f7fb;--green:#9af0bd;--orange:#ffb36b;--blue:#8fc4ff;--line:#29344a;--accent:var(--green)}
-*{box-sizing:border-box}html,body{background:#090d18}body{margin:0;background:linear-gradient(160deg,#10192b,#090d18 70%);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);min-height:100vh}
-main{max-width:560px;margin:auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom))}
-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}h1{font-size:25px;margin:0;letter-spacing:-.6px}.sub{color:var(--muted);font-size:13px;margin-top:5px}
-.pill{border:1px solid #385344;color:var(--green);border-radius:99px;padding:6px 10px;font-size:12px}
-.card{background:rgba(21,29,48,.95);border:1px solid var(--line);border-radius:22px;padding:18px;margin:12px 0;box-shadow:0 12px 35px #0002}
-label{display:block;font-size:13px;color:var(--muted);margin:0 0 8px}
-button,.filelabel{border:0;border-radius:14px;padding:14px 15px;font-size:15px;font-weight:650;cursor:pointer;background:#26334b;color:var(--text);display:inline-flex;align-items:center;justify-content:center;gap:8px;margin:0}
-button:disabled{opacity:.4;cursor:not-allowed}button:focus-visible,select:focus-visible,.filelabel:focus-within{outline:2px solid var(--green);outline-offset:2px}
-.primary{background:var(--accent);color:#0b1820}.danger{background:#482a36;color:#ffd1db}.wide{width:100%}.row{display:flex;gap:9px}.row>*{flex:1}.filelabel input{display:none}
-select{width:100%;background:#0f1728;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px}
-.center{text-align:center}.eyebrow{font-size:12px;letter-spacing:1.4px;color:var(--accent);text-transform:uppercase;font-weight:700}
-.stepname{font-size:25px;font-weight:750;margin:10px 0 2px;letter-spacing:-.7px}
-.timer{font-size:76px;font-weight:800;letter-spacing:-3px;font-variant-numeric:tabular-nums;color:var(--accent);line-height:1.15;margin:12px 0;transition:color .3s}
-.timer.dist{font-size:56px;letter-spacing:-2px}
-.next{color:var(--muted);font-size:14px;min-height:22px}
-.progress{height:7px;background:#2a3549;border-radius:9px;overflow:hidden;margin:18px 0 12px}.bar{height:100%;width:0;background:var(--accent);transition:width .25s,background .3s}
-#runCard{transition:border-color .3s}
-.phase-interval{--accent:var(--orange)}.phase-recovery{--accent:var(--green)}.phase-warmup,.phase-cooldown{--accent:var(--blue)}.phase-done{--accent:var(--green)}
-#runCard.phase-interval{border-color:#6b4a2c}#runCard.phase-recovery{border-color:#2f5a44}#runCard.phase-warmup,#runCard.phase-cooldown{border-color:#304a6b}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#0e1627;border-radius:14px;padding:12px}.stat .val{font-size:22px;font-weight:750;margin-top:5px;font-variant-numeric:tabular-nums}.stat .lab{font-size:12px;color:var(--muted)}
-.list{display:flex;flex-direction:column;gap:8px}
-.item{display:flex;align-items:center;gap:12px;background:#0f1728;border:1px solid #202b40;border-radius:13px;padding:11px;transition:opacity .3s,border-color .3s}
-.item.done{opacity:.4}.item.active{border-color:var(--accent);background:#141f35}
-.item[data-type=interval]{--accent:var(--orange)}.item[data-type=recovery]{--accent:var(--green)}.item[data-type=warmup],.item[data-type=cooldown]{--accent:var(--blue)}
-.num{width:30px;height:30px;flex-shrink:0;border-radius:9px;background:#27334a;display:grid;place-items:center;color:var(--accent);font-weight:750}
-.itemmain{flex:1}.itemname{font-weight:650;font-size:14px}.itemmeta{font-size:12px;color:var(--muted);margin-top:3px}
-.small{font-size:12px;color:var(--muted);line-height:1.5}
-.notice{border-left:3px solid var(--orange);padding:10px 12px;background:#2a211b;border-radius:0 10px 10px 0;color:#f5d7b3;font-size:13px;line-height:1.5}
-.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0}.toggle input{width:20px;height:20px;accent-color:#9af0bd;flex-shrink:0}
-#status{font-size:13px;color:var(--muted);margin-top:10px;min-height:18px}
-footer{text-align:center;color:#65748c;font-size:11px;margin-top:22px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ---------- tokeny ---------- */
+:root{
+ --paper:#F3F4F2;--card:#FFFFFF;--ink:#121417;--sub:#60666E;--line:#E2E4E1;--soft:#E9EBE8;
+ --c-interval:#FF5B21;--c-recovery:#5FD896;--c-warmup:#8DBFFF;--c-cooldown:#8DBFFF;--c-paused:#C8CCD1;
+ --run-ink:#121417;
+ --r-lg:28px;--r-md:18px;--r-sm:10px;
+ --font:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{--paper:#0E1012;--card:#181B1F;--ink:#F1F2EF;--sub:#9AA1A9;--line:#262A2F;--soft:#20242A;color-scheme:dark}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;background:var(--paper)}
+body{margin:0;font-family:var(--font);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;transition:background-color .45s ease}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+button:focus-visible,summary:focus-visible{outline:3px solid currentColor;outline-offset:3px;border-radius:12px}
+.num{font-variant-numeric:tabular-nums;font-stretch:70%;font-variation-settings:"wdth" 70}
+.screen{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 20px calc(env(safe-area-inset-bottom) + 132px);min-height:100vh;min-height:100svh}
+
+/* ---------- příprava ---------- */
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--sub)}
+.brand i{width:10px;height:10px;border-radius:3px;background:var(--c-interval);display:inline-block}
+.kicker{margin:34px 0 6px;font-size:15px;color:var(--sub)}
+h1{margin:0;font-size:44px;line-height:.98;font-weight:800;font-stretch:72%;font-variation-settings:"wdth" 72;letter-spacing:-.01em}
+.facts{display:flex;gap:28px;margin:26px 0 22px}
+.fact b{display:block;font-size:40px;line-height:1;font-weight:750}
+.fact span{font-size:13px;color:var(--sub)}
+.strip{display:flex;gap:3px;height:44px;align-items:stretch}
+.strip i{border-radius:5px;min-width:3px;background:var(--seg)}
+.strip i[data-type=interval]{--seg:var(--c-interval)}.strip i[data-type=recovery]{--seg:var(--c-recovery)}
+.strip i[data-type=warmup],.strip i[data-type=cooldown]{--seg:var(--c-warmup)}
+.legend{display:flex;gap:16px;margin:10px 0 0;font-size:13px;color:var(--sub)}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;background:var(--seg)}
+.legend .l1{--seg:var(--c-warmup)}.legend .l2{--seg:var(--c-interval)}.legend .l3{--seg:var(--c-recovery)}
+
+.panel{background:var(--card);border-radius:var(--r-md);margin-top:12px}
+.panels{margin-top:34px}
+summary{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:18px;font-weight:650;font-size:16px;cursor:pointer}
+summary::-webkit-details-marker{display:none}
+summary .cnt{color:var(--sub);font-weight:500;font-size:14px;margin-left:auto;margin-right:12px}
+summary svg{transition:transform .2s;color:var(--sub)}details[open] summary svg{transform:rotate(90deg)}
+.plan{list-style:none;margin:0;padding:0 18px 14px}
+.plan li{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:15px}
+.plan li::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--seg)}
+.plan li[data-type=interval]{--seg:var(--c-interval)}.plan li[data-type=recovery]{--seg:var(--c-recovery)}.plan li[data-type=warmup],.plan li[data-type=cooldown]{--seg:var(--c-warmup)}
+.plan .sh{grid-column:1/-1;display:block;font-size:13px;color:var(--sub);padding:14px 0 2px;border:0}
+.plan .sh::before{display:none}
+.plan .v{color:var(--sub)}
+.hist{padding:0 8px 8px}
+.hist button{display:grid;grid-template-columns:62px 1fr auto;align-items:center;gap:10px;width:100%;text-align:left;padding:12px 10px;border-radius:12px}
+.hist button:active{background:var(--soft)}
+.hist .d{font-weight:750;font-size:18px}.hist .n{font-size:14px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hist .t{font-size:16px;font-weight:650}
+.hint{font-size:13px;color:var(--sub);text-align:center;margin:22px 12px 0;line-height:1.5}
+.err{margin-top:20px;color:var(--sub);font-size:15px;line-height:1.5}
+
+.dock{position:fixed;left:0;right:0;bottom:0;padding:22px 20px calc(env(safe-area-inset-bottom) + 18px);background:linear-gradient(to bottom,transparent,var(--paper) 40%);z-index:5}
+.btn-big{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:520px;height:66px;margin:0 auto;border-radius:999px;background:var(--ink);color:var(--paper);font-size:21px;font-weight:750;font-stretch:90%;transition:transform .12s}
+.btn-big:active{transform:scale(.97)}
+.btn-big:disabled{opacity:.3}
+.btn-text{display:block;margin:16px auto 0;color:var(--sub);font-size:15px;padding:8px 14px}
+
+/* ---------- běh ---------- */
+body[data-phase=interval]{--phase:var(--c-interval)}body[data-phase=recovery]{--phase:var(--c-recovery)}
+body[data-phase=warmup],body[data-phase=cooldown]{--phase:var(--c-warmup)}body[data-phase=paused]{--phase:var(--c-paused)}
+body[data-state=running],body[data-state=paused]{background:var(--phase);color:var(--run-ink)}
+html:has(body[data-state=running]),html:has(body[data-state=paused]){background:var(--phase)}
+.run{display:flex;flex-direction:column;padding-bottom:calc(env(safe-area-inset-bottom) + 22px);color:var(--run-ink)}
+.rstrip{display:flex;gap:2px;height:6px}
+.rstrip i{border-radius:3px;min-width:2px;background:rgba(18,20,23,.16)}
+.rstrip i.done{background:rgba(18,20,23,.75)}
+.rstrip i.cur{background:linear-gradient(to right,rgba(18,20,23,.75) var(--p,0%),rgba(18,20,23,.16) var(--p,0%))}
+.rmeta{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;font-size:16px;font-weight:650}
+.rmeta .tot{font-weight:500;opacity:.7}
+.rmain{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4vh 0}
+.rphase{font-size:16px;font-weight:650;opacity:.72}
+.rname{margin:4px 0 0;font-size:34px;line-height:1.02;font-weight:800;font-stretch:78%;font-variation-settings:"wdth" 78;letter-spacing:-.01em}
+.clock{white-space:nowrap;overflow:hidden;font-size:min(44vw,236px);line-height:.86;font-weight:850;letter-spacing:-.025em;margin:2vh 0 0;font-stretch:62%;font-variation-settings:"wdth" 62;font-variant-numeric:tabular-nums}
+.clock small{font-size:.28em;font-weight:700;letter-spacing:0;margin-left:.15em}
+.clock.tick{animation:tick .5s ease-out}
+@keyframes tick{0%{transform:scale(1.04)}100%{transform:scale(1)}}
+.sbar{height:6px;background:rgba(18,20,23,.14);border-radius:6px;overflow:hidden;margin-top:18px}
+.sbar i{display:block;height:100%;width:0;background:var(--run-ink);border-radius:6px;transition:width .25s linear}
+.live{margin-top:12px;font-size:17px;font-weight:600;min-height:24px;opacity:.82}
+.upnext{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.34);border-radius:var(--r-md);padding:14px 16px;font-size:16px}
+.upnext .lab{opacity:.65}.upnext b{flex:1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.upnext .v{font-weight:700}
+.controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:22px}
+.ctl{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;font-weight:650}
+.ctl .c{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;background:rgba(18,20,23,.12);position:relative}
+.ctl:active .c{background:rgba(18,20,23,.22)}
+.ctl:disabled{opacity:.35}
+.main{width:88px;height:88px;border-radius:50%;background:var(--run-ink);color:var(--phase);display:grid;place-items:center;transition:transform .12s;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.main:active{transform:scale(.94)}
+.hold svg.ring{position:absolute;inset:-4px;width:68px;height:68px;transform:rotate(-90deg)}
+.hold svg.ring circle{fill:none;stroke:var(--run-ink);stroke-width:4;stroke-dasharray:201;stroke-dashoffset:201;transition:stroke-dashoffset .15s}
+.hold.holding svg.ring circle{stroke-dashoffset:0;transition:stroke-dashoffset .9s linear}
+
+/* ---------- hodnocení série ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:9;animation:fade .25s}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--card);color:var(--ink);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:12px 20px calc(env(safe-area-inset-bottom) + 18px);animation:up .3s cubic-bezier(.2,.9,.3,1)}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 16px}
+.sheet .inner{max-width:520px;margin:0 auto}
+.sheet h2{margin:0;font-size:26px;font-weight:800;font-stretch:80%;font-variation-settings:"wdth" 80}
+.sheet p{margin:6px 0 0;color:var(--sub);font-size:14px}
+.rpe{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0 6px}
+.rpe button{height:58px;border-radius:14px;font-size:24px;font-weight:800;background:hsl(var(--h) 85% 88%);color:#121417;font-stretch:75%}
+.rpe button:active{transform:scale(.94)}
+.rpe-scale{display:flex;justify-content:space-between;font-size:12px;color:var(--sub)}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fade{from{opacity:0}}
+
+/* ---------- souhrn ---------- */
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--sub);font-size:15px;font-weight:600;padding:6px 0}
+.dstats{display:flex;gap:28px;margin:22px 0 0}
+.insight{margin-top:24px;background:var(--card);border-radius:var(--r-md);padding:16px 18px;font-size:16px;line-height:1.45;display:flex;gap:12px}
+.insight::before{content:"";flex:0 0 4px;border-radius:4px;background:var(--accent,var(--c-recovery))}
+.tbl{margin-top:12px;background:var(--card);border-radius:var(--r-md);padding:14px 16px 6px}
+.tbl h3{margin:0 0 4px;font-size:14px;font-weight:600;color:var(--sub)}
+.grid{display:grid;align-items:stretch}
+.grid>div{padding:10px 0;border-top:1px solid var(--line);font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;min-height:48px}
+.grid>.hd{border-top:0;font-size:13px;font-weight:600;color:var(--sub);padding:6px 0;min-height:0}
+.grid>.rl{justify-content:flex-start;font-size:15px;font-weight:600}
+.grid .mut{color:var(--sub);font-weight:500}
+.pill{display:inline-grid;place-items:center;min-width:30px;height:26px;padding:0 6px;border-radius:8px;font-size:15px;background:hsl(var(--h) 85% 88%);color:#121417}
+.rows{margin-top:12px;background:var(--card);border-radius:var(--r-md);padding:4px 16px}
+.rows .r{display:flex;align-items:baseline;gap:10px;padding:12px 0;border-top:1px solid var(--line);font-size:16px}
+.rows .r:first-child{border-top:0}
+.rows .r b{flex:1;font-weight:600}.rows .r span{color:var(--sub);font-size:14px}.rows .r em{font-style:normal;font-weight:700;min-width:84px;text-align:right}
+.note{font-size:13px;color:var(--sub);margin:12px 4px 0;line-height:1.5}
+.del{color:#d24a3a}
+
+@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+@media (max-height:700px){.clock{font-size:min(40vw,190px)}.rname{font-size:28px}.rmain{padding:2vh 0}.controls{margin-top:14px}}
 </style>
 </head>
-<body>
-<main>
-<header><div><h1>🏃 TRImates Run</h1><div class="sub">Tvůj hlasový intervalový trenér</div></div><span class="pill">BETA · zdarma</span></header>
+<body data-state="loading">
 
-<section class="card">
-<label for="workoutSelect">Trénink</label>
-<select id="workoutSelect"></select>
-<div class="row" style="margin-top:10px">
-<label class="filelabel">📂 Načíst JSON<input id="jsonFile" type="file" accept=".json,application/json"></label>
-<button id="reloadBtn">⟳ Z GitHubu</button>
+<!-- PŘÍPRAVA -->
+<section class="screen" id="readyScreen" data-only="loading error ready">
+ <div class="brand"><i></i>TRImates Run</div>
+ <p class="kicker" id="rKicker">Načítám trénink…</p>
+ <h1 id="rName">&nbsp;</h1>
+ <div data-only="ready">
+  <div class="facts" id="rFacts"></div>
+  <div class="strip" id="rStrip" aria-hidden="true"></div>
+  <div class="legend"><span class="l1">Rozklus a výklus</span><span class="l2">Interval</span><span class="l3">Meziklus</span></div>
+  <div class="panels">
+   <details class="panel" id="planBox">
+    <summary>Průběh tréninku<span class="cnt" id="planCount"></span><svg width="9" height="14" viewBox="0 0 9 14"><path d="M1.5 1.5 7 7l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+    <ol class="plan" id="planList"></ol>
+   </details>
+   <details class="panel" id="histBox">
+    <summary>Historie<span class="cnt" id="histCount"></span><svg width="9" height="14" viewBox="0 0 9 14"><path d="M1.5 1.5 7 7l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+    <div class="hist" id="histList"></div>
+   </details>
+  </div>
+  <p class="hint">Při startu povol polohu, aplikace z ní měří tempo úseků. Displej nech zapnutý – po zamčení iPhone ztiší hlas i GPS.</p>
+ </div>
+ <p class="err" id="errText" data-only="error">Trénink se nepodařilo načíst. Zkontroluj připojení k internetu a že je v repozitáři nahraný soubor workout.json.</p>
+ <div class="dock">
+  <button class="btn-big" id="startBtn" data-only="ready loading"><svg width="20" height="22" viewBox="0 0 20 22"><path d="M2 2.6v16.8a1.5 1.5 0 0 0 2.3 1.3l13.4-8.4a1.5 1.5 0 0 0 0-2.6L4.3 1.3A1.5 1.5 0 0 0 2 2.6Z" fill="currentColor"/></svg>Start</button>
+  <button class="btn-big" id="retryBtn" data-only="error">Zkusit znovu</button>
+ </div>
+</section>
+
+<!-- BĚH -->
+<section class="screen run" id="runScreen" data-only="running paused">
+ <div class="rstrip" id="runStrip" aria-hidden="true"></div>
+ <div class="rmeta"><span id="seriesLabel"></span><span class="tot num" id="totalLabel">0:00</span></div>
+ <div class="rmain">
+  <div class="rphase" id="phaseLabel">Interval</div>
+  <h2 class="rname" id="stepName">–</h2>
+  <div class="clock" id="clock" aria-live="off">0:00</div>
+  <div class="sbar"><i id="stepBar"></i></div>
+  <div class="live" id="live" aria-live="polite"></div>
+ </div>
+ <div class="upnext" id="upNext"><span class="lab">Další</span><b id="nextName"></b><span class="v num" id="nextVal"></span></div>
+ <div class="controls">
+  <button class="ctl" id="nextBtn"><span class="c"><svg width="22" height="20" viewBox="0 0 22 20"><path d="M2 2.4v15.2a1.3 1.3 0 0 0 2 1.1l11-7.6a1.3 1.3 0 0 0 0-2.2L4 1.3a1.3 1.3 0 0 0-2 1.1Z" fill="currentColor"/><rect x="17" y="1" width="3.2" height="18" rx="1.4" fill="currentColor"/></svg></span><span id="nextLab">Další úsek</span></button>
+  <button class="main" id="pauseBtn" aria-label="Pauza">
+   <svg id="icPause" width="26" height="30" viewBox="0 0 26 30"><rect x="2" y="1" width="8" height="28" rx="2.5" fill="currentColor"/><rect x="16" y="1" width="8" height="28" rx="2.5" fill="currentColor"/></svg>
+   <svg id="icPlay" width="28" height="30" viewBox="0 0 20 22" style="display:none"><path d="M2 2.6v16.8a1.5 1.5 0 0 0 2.3 1.3l13.4-8.4a1.5 1.5 0 0 0 0-2.6L4.3 1.3A1.5 1.5 0 0 0 2 2.6Z" fill="currentColor"/></svg>
+  </button>
+  <button class="ctl hold" id="stopBtn"><span class="c"><svg class="ring" viewBox="0 0 68 68"><circle cx="34" cy="34" r="32"/></svg><svg width="18" height="18" viewBox="0 0 18 18"><rect width="18" height="18" rx="3.5" fill="currentColor"/></svg></span><span id="stopLab">Podrž = konec</span></button>
+ </div>
+</section>
+
+<!-- SOUHRN -->
+<section class="screen" id="doneScreen" data-only="done">
+ <button class="back" id="backBtn" hidden><svg width="9" height="14" viewBox="0 0 9 14"><path d="M7.5 1.5 2 7l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Zpět</button>
+ <p class="kicker" id="dKicker"></p>
+ <h1 id="dTitle">Hotovo</h1>
+ <div class="dstats" id="dStats"></div>
+ <div class="insight" id="insight" hidden></div>
+ <div class="tbl" id="seriesTbl" hidden><h3>Tempo v sériích (min/km)</h3><div class="grid" id="seriesGrid"></div></div>
+ <div class="rows" id="otherRows" hidden></div>
+ <p class="note" id="dNote" hidden></p>
+ <button class="btn-text del" id="deleteBtn" hidden>Smazat z historie</button>
+ <div class="dock"><button class="btn-big" id="closeBtn">Hotovo</button></div>
+</section>
+
+<!-- HODNOCENÍ SÉRIE -->
+<div class="scrim" id="rpeScrim" hidden></div>
+<div class="sheet" id="rpeSheet" hidden role="dialog" aria-labelledby="rpeTitle">
+ <div class="inner">
+  <div class="grab"></div>
+  <h2 id="rpeTitle">Jak těžká byla série?</h2>
+  <p>Ťukni na číslo. Můžeš běžet dál.</p>
+  <div class="rpe" id="rpeGrid"></div>
+  <div class="rpe-scale"><span>lehké</span><span>na hraně</span></div>
+  <button class="btn-text" id="rpeSkip">Přeskočit</button>
+ </div>
 </div>
-<div id="fileInfo" class="small" style="margin-top:9px">Načítám trénink…</div>
-</section>
 
-<section class="card center" id="runCard">
-<div class="eyebrow" id="phaseLabel">PŘIPRAVENO</div>
-<div class="stepname" id="stepName">TRImates Run</div>
-<div class="timer" id="clock">00:00</div>
-<div class="next" id="nextName">Stiskni Start a vyběhni.</div>
-<div class="progress"><div class="bar" id="progressBar"></div></div>
-<div class="stats">
-<div class="stat"><div class="lab">Celkový čas</div><div class="val" id="elapsed">00:00</div></div>
-<div class="stat"><div class="lab">Krok</div><div class="val" id="stepCount">—</div></div>
-</div>
-<div class="row" style="margin-top:15px">
-<button class="primary wide" id="startBtn">▶ Start</button>
-<button class="wide" id="pauseBtn" disabled>Ⅱ Pauza</button>
-<button class="danger wide" id="stopBtn" disabled>■ Konec</button>
-</div>
-<button class="wide" id="nextBtn" style="margin-top:9px" disabled>⏭ Další úsek</button>
-<div id="status" aria-live="polite">Hlasové pokyny se aktivují po stisku Start.</div>
-</section>
-
-<section class="card">
-<div style="font-size:17px;font-weight:750;margin-bottom:12px">Průběh tréninku</div>
-<div class="list" id="stepsList"></div>
-</section>
-
-<section class="card">
-<div style="font-size:17px;font-weight:750;margin-bottom:4px">Nastavení</div>
-<div class="toggle"><div><div style="font-weight:650">České hlasové pokyny</div><div class="small">Název úseku při každé změně</div></div><input type="checkbox" id="voiceToggle" checked></div>
-<div class="toggle"><div><div style="font-weight:650">Upozornění 10 sekund před změnou</div><div class="small">Hlasem oznámí, co přijde</div></div><input type="checkbox" id="countdownToggle" checked></div>
-<div class="toggle"><div><div style="font-weight:650">Pípání 3‑2‑1</div><div class="small">Krátké tóny před koncem úseku a delší při změně</div></div><input type="checkbox" id="beepToggle" checked></div>
-<div class="toggle"><div><div style="font-weight:650">Vibrace při změně úseku</div><div class="small">Funguje na Androidu, iPhone vibrace z webu nepodporuje</div></div><input type="checkbox" id="vibrateToggle" checked></div>
-<div class="toggle"><div><div style="font-weight:650">Měřit kilometrové úseky přes GPS</div><div class="small">Rozklus a chůze skončí samy po uběhnutí vzdálenosti</div></div><input type="checkbox" id="gpsToggle" checked></div>
-<button class="wide" id="testVoice" style="margin-top:8px">🔊 Otestovat hlas a pípání</button>
-</section>
-
-<div class="notice"><b>Důležité pro iPhone:</b> nech obrazovku zapnutou, aplikace se ji snaží držet rozsvícenou. Po zamčení Safari pozastaví hlas i GPS. Časovač po odemčení dorovná uběhlý čas, ale hlášení během zamčení neuslyšíš.</div>
-<footer>TRImates Run · trénink a nastavení zůstávají v zařízení</footer>
-</main>
 <script>
 const $=id=>document.getElementById(id);
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const TYPE_LABEL={warmup:"ROZKLUS",interval:"INTERVAL",recovery:"MEZIKLUS",cooldown:"VÝKLUS"};
-const TOGGLES=["voiceToggle","countdownToggle","beepToggle","vibrateToggle","gpsToggle"];
+const PHASE_NAME={warmup:"Rozklus",interval:"Interval",recovery:"Meziklus",cooldown:"Výklus",paused:"Pozastaveno"};
+const PHASE_COLOR={warmup:"#8DBFFF",interval:"#FF5B21",recovery:"#5FD896",cooldown:"#8DBFFF",paused:"#C8CCD1"};
+const rpeHue=n=>Math.round(140-(n-1)*(130/9));
 
-// ---------- Tréninky ----------
-const demo={name:"TRImates 4× (3–2–1 min) · ukázka",steps:[
- {name:"Rozklus",type:"warmup",kind:"distance",meters:1000},
- ...Array.from({length:4},(_,i)=>[
-  {name:"Tempo na 10 km",type:"interval",kind:"time",seconds:180},
-  {name:"Lehký meziklus",type:"recovery",kind:"time",seconds:45},
-  {name:"Tempo na 5 km",type:"interval",kind:"time",seconds:120},
-  {name:"Lehký meziklus",type:"recovery",kind:"time",seconds:45},
-  {name:"Svižně – rychleji než tempo na 5 km",type:"interval",kind:"time",seconds:60},
-  ...(i<3?[{name:"Meziklus mezi sériemi",type:"recovery",kind:"time",seconds:120}]:[])
- ]).flat(),
- {name:"Závěrečná chůze",type:"cooldown",kind:"distance",meters:1000}
-]};
-const sources={repo:null,file:store.get("fileWorkout",null),demo};
-let source=null, workout=[], workoutName="";
+// ---------- formátování ----------
+const fmt=s=>{s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+const kmNum=m=>(m/1000).toFixed(m%1000===0?0:m>=10000?1:2).replace(".",",");
+const km=m=>kmNum(m)+" km";
+const paceSec=(sec,m)=>m>=50?sec/(m/1000):null;
+const paceTxt=(sec,m)=>{const p=paceSec(sec,m);return p?fmt(p):"—"};
+const stepText=s=>s.kind==="distance"?km(s.meters):fmt(s.seconds);
+const durLabel=sec=>sec%60===0?sec/60+" min":fmt(sec);
+const dShort=t=>new Date(t).toLocaleDateString("cs-CZ",{day:"numeric",month:"numeric"});
+const dLong=t=>new Date(t).toLocaleDateString("cs-CZ",{weekday:"long",day:"numeric",month:"long"});
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const isWalk=s=>/chůz|chuz|walk/i.test(s.name);
+const estSec=s=>s.kind==="time"?s.seconds:s.meters*(isWalk(s)?.66:.36);
 
+// ---------- stav aplikace ----------
+let state="loading";
+function setState(s){
+ state=s;document.body.dataset.state=s;
+ document.querySelectorAll("[data-only]").forEach(el=>{el.hidden=!el.dataset.only.split(" ").includes(s)});
+ if(s==="ready")$("histBox").hidden=!hist.length;
+ if(s!=="running"&&s!=="paused"){document.body.dataset.phase="";setTheme(null)}
+ $("startBtn").disabled=s==="loading";
+ render();
+}
+function setTheme(c){$("themeColor").content=c||getComputedStyle(document.body).backgroundColor||"#F3F4F2"}
+
+// ---------- trénink z GitHubu ----------
+let workout=[],workoutName="",workoutDate="",seriesCount=0;
 function parseJson(obj){
- const out=[];
- const fallback={warmup:"Rozklus",interval:"Interval",recovery:"Meziklus",cooldown:"Výklus"};
- function mk(s){
-  const key=s.stepType?.stepTypeKey||"";
-  const cond=s.endCondition?.conditionTypeKey||"";
+ const out=[],fb={warmup:"Rozklus",interval:"Interval",recovery:"Meziklus",cooldown:"Výklus"};let maxS=0;
+ function mk(s,series){
+  const key=s.stepType?.stepTypeKey||"",cond=s.endCondition?.conditionTypeKey||"";
   const type=["warmup","interval","recovery","cooldown"].includes(key)?key:(key==="rest"?"recovery":"interval");
-  const raw=(s.description||"").trim();
-  const name=raw?raw[0].toUpperCase()+raw.slice(1):fallback[type];
-  if(cond==="time")return{name,type,kind:"time",seconds:Number(s.endConditionValue)||0};
-  if(cond==="distance"||cond==="lap.button")return{name,type,kind:"distance",meters:Number(s.endConditionValue)||1000};
+  const raw=(s.description||"").trim(),name=raw?raw[0].toUpperCase()+raw.slice(1):fb[type];
+  if(cond==="time")return{name,type,series,kind:"time",seconds:Number(s.endConditionValue)||0};
+  if(cond==="distance"||cond==="lap.button")return{name,type,series,kind:"distance",meters:Number(s.endConditionValue)||1000};
   return null;
  }
- function visit(steps){
+ function visit(steps,series){
   (steps||[]).forEach(s=>{
    if(s.type==="RepeatGroupDTO"||s.stepType?.stepTypeKey==="repeat"){
-    const reps=Math.max(1,Number(s.numberOfIterations||s.endConditionValue||1));
+    const reps=Math.max(1,Number(s.numberOfIterations||s.endConditionValue||1));maxS=Math.max(maxS,reps);
     for(let r=0;r<reps;r++){
-     const before=out.length;visit(s.workoutSteps);
-     // Garmin: v poslední opakované sérii se závěrečný odpočinek vynechává
+     const before=out.length;visit(s.workoutSteps,series||r+1);
      if(r===reps-1&&s.skipLastRestStep&&out.length>before&&out[out.length-1].type==="recovery")out.pop();
     }
     return;
    }
-   const st=mk(s);if(st&&(st.kind==="distance"||st.seconds>0))out.push(st);
+   const st=mk(s,series);if(st&&(st.kind==="distance"||st.seconds>0))out.push(st);
   });
  }
- (obj.workoutSegments||[]).forEach(seg=>visit(seg.workoutSteps));
- if(!out.length)throw new Error("v JSONu nejsou žádné rozpoznatelné kroky tréninku.");
- return out;
+ (obj.workoutSegments||[]).forEach(seg=>visit(seg.workoutSteps,0));
+ if(!out.length)throw new Error("v JSONu nejsou kroky tréninku");
+ const lastInt={};out.forEach((s,i)=>{if(s.series&&s.type==="interval")lastInt[s.series]=i});
+ Object.values(lastInt).forEach(i=>out[i].seriesEnd=true);
+ return{name:obj.workoutName||"Trénink",steps:out,seriesCount:maxS};
 }
-
-async function loadRepo(){
+function applyWorkout(w){
+ workout=w.steps;seriesCount=w.seriesCount||0;
+ const m=w.name.match(/^(.*?)\s+(\d{1,2}\.\s?\d{1,2}\.\s?\d{4})$/);
+ workoutName=m?m[1]:w.name;workoutDate=m?m[2].replace(/\s/g,""):"";
+ buildReady();
+}
+async function loadWorkout(){
+ if(!workout.length)setState("loading");
  try{
   const r=await fetch("workout.json?t="+Date.now(),{cache:"no-store"});
   if(!r.ok)throw new Error("HTTP "+r.status);
-  const obj=await r.json();
-  sources.repo={name:obj.workoutName||"workout.json",steps:parseJson(obj)};
-  return true;
- }catch(e){sources.repo=null;return false}
+  const w=parseJson(await r.json());store.set("lastWorkout",w);applyWorkout(w);
+ }catch(e){
+  const c=store.get("lastWorkout",null);
+  if(c&&!workout.length)applyWorkout(c);
+  if(!workout.length){setState("error");return}
+ }
+ if(state==="loading"||state==="error"||state==="ready")setState("ready");
 }
 
-function renderSelect(){
- const sel=$("workoutSelect");sel.innerHTML="";
- const add=(v,t)=>{const o=document.createElement("option");o.value=v;o.textContent=t;sel.appendChild(o)};
- if(sources.repo)add("repo","GitHub: "+sources.repo.name);
- if(sources.file)add("file","Ze souboru: "+sources.file.name);
- add("demo",demo.name);
- sel.value=source;
+// ---------- obrazovka přípravy ----------
+function buildStrip(el){
+ el.innerHTML="";
+ workout.forEach(s=>{const i=document.createElement("i");i.dataset.type=s.type;i.style.flexGrow=estSec(s);el.appendChild(i)});
+}
+function buildReady(){
+ $("rKicker").textContent=workoutDate?"Trénink na "+workoutDate:"Dnešní trénink";
+ $("rName").textContent=workoutName;
+ const total=workout.reduce((a,s)=>a+estSec(s),0);
+ const dist=workout.reduce((a,s)=>a+(s.kind==="distance"?s.meters:0),0);
+ const f=[["≈ "+Math.round(total/60),"minut"]];
+ if(seriesCount)f.push([seriesCount,seriesCount<5?"série":"sérií"]);
+ f.push([workout.filter(s=>s.type==="interval").length,"úseků v tempu"]);
+ $("rFacts").innerHTML=f.map(([a,b])=>`<div class="fact"><b class="num">${esc(a)}</b><span>${esc(b)}</span></div>`).join("");
+ buildStrip($("rStrip"));buildStrip($("runStrip"));
+ const pl=$("planList");pl.innerHTML="";let lastS=-1;
+ workout.forEach(s=>{
+  if(s.series&&s.series!==lastS){const h=document.createElement("li");h.className="sh";h.textContent=s.series+". série";pl.appendChild(h)}
+  if(!s.series&&lastS>0){const h=document.createElement("li");h.className="sh";h.textContent="Závěr";pl.appendChild(h)}
+  lastS=s.series||0;
+  const li=document.createElement("li");li.dataset.type=s.type;
+  li.innerHTML=`<span>${esc(s.name)}</span><span class="v num">${esc(stepText(s))}</span>`;pl.appendChild(li);
+ });
+ $("planCount").textContent=workout.length+" kroků";
 }
 
-function selectSource(src){
- if(!sources[src])src=sources.repo?"repo":sources.file?"file":"demo";
- if(running)stopWorkout(true);
- source=src;store.set("source",src);
- workout=sources[src].steps.map(x=>({...x}));workoutName=sources[src].name;
- const info={repo:"Trénink z GitHubu (workout.json)",file:"Trénink načtený ze souboru",demo:"Ukázkový trénink"}[src];
- $("fileInfo").textContent=`${info} · ${workout.length} kroků · ${fmt(totalTimed())} na čas + ${countDist()} km.`;
- renderSelect();resetState();renderList();updateUI();
-}
-const totalTimed=()=>workout.reduce((a,s)=>a+(s.kind==="time"?s.seconds:0),0);
-const countDist=()=>String(workout.reduce((a,s)=>a+(s.kind==="distance"?s.meters:0),0)/1000).replace(".",",");
-
-// ---------- Pomocné ----------
-const fmt=s=>{s=Math.max(0,Math.floor(s||0));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
-const kmText=m=>(m/1000).toFixed(m%1000?2:0).replace(".",",")+" km";
-const stepText=s=>s.kind==="distance"?kmText(s.meters):fmt(s.seconds);
-function setStatus(t){$("status").textContent=t}
-
-function say(text,force=false){
- if(!$("voiceToggle").checked&&!force)return;
- if(!("speechSynthesis"in window))return;
- speechSynthesis.cancel();
- const u=new SpeechSynthesisUtterance(text);u.lang="cs-CZ";u.rate=.93;
+// ---------- zvuk, hlas, displej ----------
+function say(t){
+ if(!("speechSynthesis"in window))return;speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(t);u.lang="cs-CZ";u.rate=.93;
  const v=speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith("cs"));if(v)u.voice=v;
  speechSynthesis.speak(u);
 }
-
 let actx=null;
 function unlockAudio(){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();if(actx.state==="suspended")actx.resume()}catch(e){}}
-function beep(freq=880,dur=.12,vol=.3){
- if(!actx)return;
- const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
- o.type="sine";o.frequency.value=freq;
- g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
- o.connect(g).connect(actx.destination);o.start(t);o.stop(t+dur+.03);
+function beep(f=880,d=.12,v=.3){
+ if(!actx)return;const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
+ o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+ o.connect(g).connect(actx.destination);o.start(t);o.stop(t+d+.03);
 }
-
 let wakeLock=null;
 async function getWakeLock(){try{if("wakeLock"in navigator&&!wakeLock){wakeLock=await navigator.wakeLock.request("screen");wakeLock.addEventListener("release",()=>{wakeLock=null})}}catch(e){}}
 function releaseWakeLock(){if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}}
 
-// ---------- Stav tréninku ----------
-// Časy se počítají z reálných hodin (Date.now), takže po uspání stránky se nic neztratí.
-let running=false,paused=false,done=false,idx=0,ticker=null;
-let stepEndsAt=0,pausedRemaining=0,elapsedMs=0,resumedAt=0;
-let flags={said10:false,beeped:{}};
-let dist={covered:0,last:null},gpsWatch=null,gpsState="";
-
+// ---------- průběh tréninku ----------
+// Čas se počítá z reálných hodin, takže po uspání stránky se dorovná.
+let idx=0,ticker=null,stepEndsAt=0,pausedRemaining=0,elapsedMs=0,resumedAt=0,stepStartElapsed=0;
+let flags={},results=[],rpe={},pendingRpe=null,run=null,skippedNote="";
+let gpsWatch=null,gpsState="",lastPt=null,stepDist=0,stepFixes=0,stepMaxGap=0,lastFixT=0;
 const cur=()=>workout[idx];
-const elapsedNow=()=>elapsedMs+(running&&!paused?Date.now()-resumedAt:0);
+const active=()=>state==="running"||state==="paused";
+const elapsedNow=()=>elapsedMs+(state==="running"?Date.now()-resumedAt:0);
 function remainingMs(){
  const s=cur();if(!s||s.kind!=="time")return 0;
- if(!running)return s.seconds*1000;
- if(paused)return pausedRemaining;
+ if(state==="paused")return pausedRemaining;
  return Math.max(0,stepEndsAt-Date.now());
 }
-function resetState(){running=false;paused=false;done=false;idx=0;elapsedMs=0;pausedRemaining=0;dist={covered:0,last:null};gpsState=""}
-
 function enterStep(i,startAt){
- idx=i;flags={said10:false,beeped:{}};
- stopGps();dist={covered:0,last:null};
+ idx=i;flags={beeped:{}};
+ stepStartElapsed=elapsedNow()-(Date.now()-startAt);
+ stepDist=0;stepFixes=0;stepMaxGap=0;lastFixT=startAt;
+ const s=cur();if(s.kind==="time")stepEndsAt=startAt+s.seconds*1000;
+ if(s.type==="interval")hideRpe();
+ const c=$("clock");c.classList.remove("tick");void c.offsetWidth;c.classList.add("tick");
+}
+function leaveStep(natural,endT){
  const s=cur();
- if(s.kind==="time")stepEndsAt=startAt+s.seconds*1000;
- else startGps();
+ const sec=natural&&s.kind==="time"?s.seconds:(elapsedNow()-(Date.now()-endT)-stepStartElapsed)/1000;
+ const gapEnd=Math.max(stepMaxGap,endT-lastFixT);
+ results.push({name:s.name,type:s.type,series:s.series||0,plan:s.kind==="time"?s.seconds:null,sec:Math.round(sec),m:Math.round(stepDist),ok:stepFixes>=3&&gapEnd<=15000});
+ if(s.seriesEnd)pendingRpe=s.series;
+}
+function goNext(endT,natural){
+ leaveStep(natural,endT);
+ if(idx>=workout.length-1){finishWorkout(false);return false}
+ enterStep(idx+1,endT);return true;
 }
 function announceStep(){
  const s=cur();
- if($("vibrateToggle").checked&&navigator.vibrate)navigator.vibrate([180,100,180]);
- if($("beepToggle").checked)beep(1320,.4);
- say(s.name+(s.kind==="distance"?". "+kmText(s.meters)+".":"."));
- setStatus("Nový úsek: "+s.name);
+ if(navigator.vibrate)navigator.vibrate([180,100,180]);
+ beep(1320,.4);
+ say(s.name+(s.kind==="distance"?". "+km(s.meters):"")+(pendingRpe?". Ohodnoť sérii.":"."));
+ if(pendingRpe){showRpe(pendingRpe);pendingRpe=null}
 }
-function goNext(startAt){
- if(idx>=workout.length-1){finishWorkout();return false}
- enterStep(idx+1,startAt);return true;
-}
-
 function startWorkout(){
+ if(!workout.length||state!=="ready")return;
  unlockAudio();
- if(paused){resume();return}
- if(running||!workout.length)return;
- if(done)resetState();
- running=true;paused=false;done=false;elapsedMs=0;resumedAt=Date.now();
- enterStep(0,resumedAt);
- getWakeLock();
- const s=cur();
- say("Trénink začíná. "+s.name+(s.kind==="distance"?". "+kmText(s.meters)+".":"."));
- setStatus("Trénink běží.");
- ticker=setInterval(tick,200);renderActive();updateUI();
+ results=[];rpe={};pendingRpe=null;elapsedMs=0;idx=0;skippedNote="";resumedAt=Date.now();
+ state="running";enterStep(0,resumedAt);setState("running");
+ getWakeLock();startGps();
+ const s=cur();say("Trénink začíná. "+s.name+(s.kind==="distance"?". "+km(s.meters):"")+".");
+ ticker=setInterval(tick,200);
 }
-
 function tick(){
- if(!running||paused)return;
+ if(state!=="running")return;
  const now=Date.now();let s=cur(),skipped=0;
- // dorovnání: pokud byla stránka uspaná, přeskočí úseky, které mezitím uběhly
- while(s.kind==="time"&&now>=stepEndsAt){
-  if(!goNext(stepEndsAt))return;
-  skipped++;s=cur();
- }
- if(skipped){
-  announceStep();
-  if(skipped>1)setStatus("Na pozadí uběhlo "+skipped+" úseků. Teď: "+s.name);
-  renderActive();
- }
+ while(s.kind==="time"&&now>=stepEndsAt){if(!goNext(stepEndsAt,true))return;skipped++;s=cur()}
+ if(skipped){announceStep();skippedNote=skipped>1?"Na pozadí uběhlo "+skipped+" úseků":""}
  if(s.kind==="time"){
   const rem=(stepEndsAt-now)/1000;
-  if($("countdownToggle").checked&&!flags.said10&&s.seconds>15&&rem<=10.3&&rem>8){
-   flags.said10=true;
-   say("Za deset sekund "+(idx<workout.length-1?workout[idx+1].name:"konec tréninku"));
-  }
-  if($("beepToggle").checked)for(const n of[3,2,1]){
-   if(!flags.beeped[n]&&rem<=n&&rem>n-.6){flags.beeped[n]=true;beep(880,.12)}
-  }
+  if(!flags.said10&&s.seconds>15&&rem<=10.3&&rem>8){flags.said10=true;say("Za deset sekund "+(workout[idx+1]?workout[idx+1].name:"konec tréninku"))}
+  for(const n of[3,2,1])if(!flags.beeped[n]&&rem<=n&&rem>n-.6){flags.beeped[n]=true;beep(880,.12)}
  }
- updateUI();
+ render();
 }
-
 function pause(){
- pausedRemaining=remainingMs();elapsedMs=elapsedNow();paused=true;
+ pausedRemaining=remainingMs();elapsedMs=elapsedNow();
  clearInterval(ticker);ticker=null;stopGps();releaseWakeLock();
  if("speechSynthesis"in window)speechSynthesis.cancel();
- setStatus("Trénink pozastaven.");updateUI();
+ setState("paused");
 }
 function resume(){
- paused=false;resumedAt=Date.now();
- if(cur().kind==="time")stepEndsAt=resumedAt+pausedRemaining;else{dist.last=null;startGps()}
- getWakeLock();say("Pokračujeme. "+cur().name);setStatus("Trénink běží.");
- ticker=setInterval(tick,200);updateUI();
+ unlockAudio();resumedAt=Date.now();
+ if(cur().kind==="time")stepEndsAt=resumedAt+pausedRemaining;
+ lastFixT=Date.now();setState("running");startGps();getWakeLock();say("Pokračujeme. "+cur().name);
+ ticker=setInterval(tick,200);
 }
-function finishWorkout(){
- elapsedMs=elapsedNow();done=true;running=false;paused=false;
- clearInterval(ticker);ticker=null;stopGps();releaseWakeLock();
- if($("beepToggle").checked){beep(1320,.2);setTimeout(()=>beep(1760,.4),250)}
- say("Trénink dokončen. Skvělá práce!");setStatus("Trénink dokončen za "+fmt(elapsedMs/1000)+".");
- renderActive();updateUI();
+function nextManual(){if(state==="running"&&goNext(Date.now(),false)){announceStep();render()}}
+function stopWorkout(){
+ if(state==="running")elapsedMs=elapsedNow();
+ state="paused";
+ if(results.length||elapsedMs>20000){leaveStep(false,Date.now());finishWorkout(true)}
+ else{clearInterval(ticker);ticker=null;stopGps();releaseWakeLock();hideRpe();if("speechSynthesis"in window)speechSynthesis.cancel();setState("ready")}
 }
-function stopWorkout(silent=false){
+function finishWorkout(partial){
+ if(state==="running")elapsedMs=elapsedNow();
  clearInterval(ticker);ticker=null;stopGps();releaseWakeLock();
- if("speechSynthesis"in window)speechSynthesis.cancel();
- resetState();if(!silent)setStatus("Trénink ukončen.");renderActive();updateUI();
+ if(!partial){beep(1320,.2);setTimeout(()=>beep(1760,.4),250);say("Trénink dokončen. Skvělá práce!")}
+ else if("speechSynthesis"in window)speechSynthesis.cancel();
+ run={id:Date.now(),date:Date.now(),name:workoutName,total:Math.round(elapsedMs/1000),
+  dist:results.reduce((a,r)=>a+(r.ok?r.m:0),0),partial,results,rpe};
+ hist.unshift(run);hist=hist.slice(0,50);store.set("history",hist);
+ if(pendingRpe){showRpe(pendingRpe);pendingRpe=null}
+ renderHistory();openSummary(run,false);
 }
 
-// ---------- GPS pro kilometrové úseky ----------
-function hav(a,b){const R=6371000,r=Math.PI/180,dLa=(b.la-a.la)*r,dLo=(b.lo-a.lo)*r;const h=Math.sin(dLa/2)**2+Math.cos(a.la*r)*Math.cos(b.la*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+// ---------- GPS ----------
+function hav(a,b){const R=6371000,r=Math.PI/180,dA=(b.la-a.la)*r,dO=(b.lo-a.lo)*r;const h=Math.sin(dA/2)**2+Math.cos(a.la*r)*Math.cos(b.la*r)*Math.sin(dO/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 function startGps(){
- if(!$("gpsToggle").checked||!("geolocation"in navigator)){gpsState="";return}
- stopGps();gpsState="wait";
+ if(!("geolocation"in navigator)){gpsState="none";return}
+ stopGps();lastPt=null;if(gpsState!=="denied")gpsState="wait";
  gpsWatch=navigator.geolocation.watchPosition(onPos,onGpsErr,{enableHighAccuracy:true,maximumAge:0,timeout:30000});
 }
 function stopGps(){if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}}
 function onPos(p){
- if(!running||paused)return;
- const s=cur();if(s.kind!=="distance")return;
- const{latitude:la,longitude:lo,accuracy:acc}=p.coords,pt={la,lo,t:p.timestamp};
- if(acc>35){gpsState="weak";updateUI();return}
+ if(state!=="running")return;
+ const{latitude:la,longitude:lo,accuracy:acc}=p.coords,pt={la,lo,t:Date.now()};
+ stepMaxGap=Math.max(stepMaxGap,pt.t-lastFixT);lastFixT=pt.t;stepFixes++;
+ if(acc>35){gpsState="weak";return}
  gpsState="ok";
- if(dist.last){
-  const d=hav(dist.last,pt),dt=(pt.t-dist.last.t)/1000;
-  if(d<Math.max(4,acc*.3))return;              // šum na místě – čekej na větší posun
-  if(dt>0&&d/dt>12){dist.last=pt;return}       // nereálný skok GPS
-  dist.covered+=d;
+ if(lastPt){
+  const d=hav(lastPt,pt),dt=(pt.t-lastPt.t)/1000;
+  if(d<Math.max(4,acc*.3))return;
+  if(dt>0&&d/dt>12){lastPt=pt;return}
+  stepDist+=d;
  }
- dist.last=pt;
- if(dist.covered>=s.meters){if(goNext(Date.now())){announceStep();renderActive()}}
- updateUI();
+ lastPt=pt;
+ const s=cur();
+ if(s.kind==="distance"&&stepDist>=s.meters){if(goNext(Date.now(),true))announceStep()}
+ render();
 }
-function onGpsErr(e){
- gpsState="err";
- setStatus(e.code===1?"Poloha není povolená – kilometrový úsek ukonči tlačítkem.":"GPS zatím nemá signál – úsek můžeš ukončit tlačítkem.");
- updateUI();
-}
+function onGpsErr(e){gpsState=e.code===1?"denied":"weak";render()}
 
-// ---------- Vykreslení ----------
-function renderList(){
- const el=$("stepsList");el.innerHTML="";
- workout.forEach((s,i)=>{
-  const d=document.createElement("div");d.className="item";d.dataset.type=s.type;d.id="step-"+i;
-  d.innerHTML='<div class="num"></div><div class="itemmain"><div class="itemname"></div><div class="itemmeta"></div></div>';
-  d.querySelector(".num").textContent=i+1;
-  d.querySelector(".itemname").textContent=s.name;
-  d.querySelector(".itemmeta").textContent=s.kind==="distance"?kmText(s.meters)+($("gpsToggle").checked?" · GPS":" · ruční ukončení"):fmt(s.seconds);
-  el.appendChild(d);
- });
- renderActive();
-}
-function renderActive(){
- workout.forEach((_,i)=>{
-  const d=$("step-"+i);if(!d)return;
-  d.classList.toggle("done",done||((running||paused)&&i<idx));
-  d.classList.toggle("active",(running||paused)&&!done&&i===idx);
- });
-}
-
-function updateUI(){
- const card=$("runCard"),clock=$("clock");
- if(!workout.length)return;
- if(done){
-  card.className="card center phase-done";
-  $("phaseLabel").textContent="DOKONČENO";$("stepName").textContent="Skvělá práce!";
-  clock.className="timer";clock.textContent="✓";$("nextName").textContent="Trénink je hotový.";
-  $("elapsed").textContent=fmt(elapsedMs/1000);$("stepCount").textContent=workout.length+"/"+workout.length;
-  $("progressBar").style.width="100%";
-  $("startBtn").disabled=false;$("startBtn").textContent="▶ Znovu";
-  $("pauseBtn").disabled=true;$("stopBtn").disabled=true;$("nextBtn").disabled=true;
-  return;
- }
- const s=cur(),active=running||paused;
- card.className="card center phase-"+s.type;
- $("phaseLabel").textContent=!active?"PŘIPRAVENO":paused?"POZASTAVENO":TYPE_LABEL[s.type];
- $("stepName").textContent=active?s.name:workoutName;
- let prog=0;
- if(s.kind==="time"){
-  const rem=remainingMs();clock.className="timer";clock.textContent=fmt(Math.ceil(rem/1000));
-  prog=(1-rem/(s.seconds*1000))*100;
- }else{
-  clock.className="timer dist";
-  if(active&&gpsState)clock.textContent=(dist.covered/1000).toFixed(2).replace(".",",")+" km";
-  else clock.textContent=active?"RUČNĚ":kmText(s.meters);
-  prog=dist.covered/s.meters*100;
- }
- $("progressBar").style.width=Math.min(100,Math.max(0,prog))+"%";
+// ---------- vykreslení běhu ----------
+let lastPhase="";
+function render(){
+ if(!active()||!workout.length)return;
+ const s=cur(),phase=state==="paused"?"paused":s.type;
+ if(phase!==lastPhase){document.body.dataset.phase=phase;setTheme(PHASE_COLOR[phase]);lastPhase=phase}
+ $("phaseLabel").textContent=PHASE_NAME[phase]===s.name?"\u00a0":PHASE_NAME[phase];
+ $("stepName").textContent=s.name;
+ $("seriesLabel").textContent=s.series?`Série ${s.series} z ${seriesCount}`:(idx===0?"Začátek":"Závěr");
+ $("totalLabel").textContent=fmt(elapsedNow()/1000);
+ let prog=0;const c=$("clock");
+ if(s.kind==="time"){const r=remainingMs();c.textContent=fmt(Math.ceil(r/1000));prog=1-r/(s.seconds*1000);fitClock()}
+ else{const live=stepDist>0||gpsState==="ok";c.innerHTML=esc(live?(stepDist/1000).toFixed(2).replace(".",","):kmNum(s.meters))+"<small>km</small>";prog=stepDist/s.meters}
+ fitClock();
+ prog=Math.min(1,Math.max(0,prog));
+ $("stepBar").style.width=prog*100+"%";
+ [...$("runStrip").children].forEach((el,i)=>{el.classList.toggle("done",i<idx);el.classList.toggle("cur",i===idx);if(i===idx)el.style.setProperty("--p",prog*100+"%")});
+ const stepSec=(elapsedNow()-stepStartElapsed)/1000;
+ let live="";
+ if(gpsState==="denied")live=s.kind==="distance"?"Bez polohy – úsek ukonči tlačítkem":"Bez polohy – tempo se neměří";
+ else if(gpsState==="wait")live="Hledám GPS…";
+ else if(gpsState==="weak"&&stepDist<80)live="Slabý GPS signál";
+ else if(stepDist>=80&&stepSec>8)live=`${paceTxt(stepSec,stepDist)} /km · ${Math.round(stepDist)} m`;
+ if(skippedNote)live=skippedNote;
+ if(state==="paused")live="Ťukni na ▶ a pokračuj";
+ $("live").textContent=live;
  const n=workout[idx+1];
- let next=n?"Další: "+n.name+" · "+stepText(n):"Poslední úsek tréninku";
- if(active&&s.kind==="distance"){
-  if(gpsState==="wait")next="Hledám GPS signál… · "+next;
-  else if(gpsState==="weak")next="Slabý GPS signál · "+next;
- }
- $("nextName").textContent=next;
- $("elapsed").textContent=fmt(elapsedNow()/1000);
- $("stepCount").textContent=(idx+1)+"/"+workout.length;
- $("startBtn").disabled=running&&!paused;
- $("startBtn").textContent=paused?"▶ Pokračovat":running?"Běží…":"▶ Start";
- $("pauseBtn").disabled=!running||paused;$("stopBtn").disabled=!active;
- $("nextBtn").disabled=!running||paused;
- $("nextBtn").textContent=s.kind==="distance"?"⏭ Úsek hotový":"⏭ Přeskočit na další úsek";
+ $("nextName").textContent=n?n.name:"Cíl";
+ $("nextVal").textContent=n?stepText(n):"";
+ $("upNext").querySelector(".lab").textContent=n?"Další":"Potom";
+ $("icPause").style.display=state==="paused"?"none":"";$("icPlay").style.display=state==="paused"?"":"none";
+ $("pauseBtn").setAttribute("aria-label",state==="paused"?"Pokračovat":"Pauza");
+ $("nextBtn").disabled=state==="paused";
+ $("nextLab").textContent=s.kind==="distance"?"Úsek hotový":"Další úsek";
 }
 
-// ---------- Události ----------
+// velké číslo se vždy vejde na šířku displeje
+let fitKey="";
+function fitClock(force){
+ const c=$("clock"),key=c.textContent.length+"|"+c.innerHTML.includes("small")+"|"+innerWidth;
+ if(key===fitKey&&!force)return;fitKey=key;
+ c.style.fontSize="";const max=c.clientWidth,w=c.scrollWidth;
+ if(w>max)c.style.fontSize=parseFloat(getComputedStyle(c).fontSize)*max/w*.97+"px";
+}
+addEventListener("resize",()=>fitClock(true));
+document.fonts&&document.fonts.ready.then(()=>fitClock(true));
+
+// ---------- hodnocení série ----------
+let rpeFor=null;
+function showRpe(series){rpeFor=series;$("rpeTitle").textContent=`Jak těžká byla ${series}. série?`;$("rpeSheet").hidden=false;$("rpeScrim").hidden=false}
+function hideRpe(){$("rpeSheet").hidden=true;$("rpeScrim").hidden=true;rpeFor=null}
+for(let n=1;n<=10;n++){
+ const b=document.createElement("button");b.textContent=n;b.style.setProperty("--h",rpeHue(n));
+ b.addEventListener("click",()=>{
+  if(rpeFor!=null){rpe[rpeFor]=n;if(state==="done"&&run){run.rpe=rpe;store.set("history",hist);openSummary(run,viewingHistory)}}
+  hideRpe();
+ });
+ $("rpeGrid").appendChild(b);
+}
+$("rpeSkip").addEventListener("click",hideRpe);
+$("rpeScrim").addEventListener("click",hideRpe);
+
+// ---------- souhrn ----------
+let hist=store.get("history",[]),viewingHistory=false;
+function openSummary(r,fromHistory){
+ run=r;viewingHistory=fromHistory;
+ $("backBtn").hidden=!fromHistory;$("deleteBtn").hidden=!fromHistory;
+ $("dKicker").textContent=dLong(r.date).replace(/^./,c=>c.toUpperCase());
+ $("dTitle").textContent=fromHistory?r.name:(r.partial?"Trénink ukončen":"Hotovo");
+ const st=[[fmt(r.total),"celkový čas"]];
+ if(r.dist)st.push([kmNum(r.dist),"km"]);
+ const ser=[...new Set(r.results.filter(x=>x.series).map(x=>x.series))];
+ if(ser.length)st.push([ser.length,"série"]);
+ $("dStats").innerHTML=st.map(([a,b])=>`<div class="fact"><b class="num">${esc(a)}</b><span>${esc(b)}</span></div>`).join("");
+
+ // tabulka sérií: řádek = série, sloupec = úsek v tempu
+ const bySer={};r.results.forEach(x=>{if(x.series&&x.type==="interval")(bySer[x.series]=bySer[x.series]||[]).push(x)});
+ const keys=Object.keys(bySer).map(Number).sort((a,b)=>a-b);
+ const cols=keys.length?Math.max(...keys.map(k=>bySer[k].length)):0;
+ const hasRpe=keys.some(k=>r.rpe&&r.rpe[k]);
+ if(keys.length){
+  const ref=bySer[keys[0]];
+  const g=$("seriesGrid");g.style.gridTemplateColumns=`1fr repeat(${cols},minmax(58px,auto))${hasRpe?" 56px":""}`;
+  let h='<div class="hd rl"></div>';
+  for(let c=0;c<cols;c++){const x=ref[c]||bySer[keys.find(k=>bySer[k][c])][c];h+=`<div class="hd">${esc(x.plan?durLabel(x.plan):x.name)}</div>`}
+  if(hasRpe)h+='<div class="hd">Pocit</div>';
+  keys.forEach(k=>{
+   h+=`<div class="rl">${k}. série</div>`;
+   for(let c=0;c<cols;c++){const x=bySer[k][c];h+=x&&x.ok&&paceSec(x.sec,x.m)?`<div class="num">${paceTxt(x.sec,x.m)}</div>`:'<div class="num mut">—</div>'}
+   if(hasRpe){const v=r.rpe[k];h+=v?`<div><span class="pill num" style="--h:${rpeHue(v)}">${v}</span></div>`:'<div class="mut">—</div>'}
+  });
+  g.innerHTML=h;$("seriesTbl").hidden=false;
+ }else $("seriesTbl").hidden=true;
+
+ // rozklus, výklus a ostatní úseky mimo série
+ const other=r.results.filter(x=>!x.series&&x.type!=="recovery");
+ $("otherRows").innerHTML=other.map(x=>`<div class="r"><b>${esc(x.name)}</b><span class="num">${fmt(x.sec)}${x.ok&&x.m?" · "+km(x.m):""}</span><em class="num">${x.ok&&paceSec(x.sec,x.m)?paceTxt(x.sec,x.m)+" /km":"—"}</em></div>`).join("");
+ $("otherRows").hidden=!other.length;
+
+ // trenérský postřeh: první vs. poslední série
+ const ins=$("insight");ins.hidden=true;
+ if(keys.length>=2){
+  const a=bySer[keys[0]],b=bySer[keys[keys.length-1]];let sa=0,sb=0,n=0;
+  for(let c=0;c<Math.min(a.length,b.length);c++){const pa=a[c].ok&&paceSec(a[c].sec,a[c].m),pb=b[c].ok&&paceSec(b[c].sec,b[c].m);if(pa&&pb){sa+=pa;sb+=pb;n++}}
+  if(n){
+   const d=Math.round((sb-sa)/n);let t,col;
+   if(Math.abs(d)<=3){t="Poslední série byla stejně rychlá jako první. Přesně tak to má být.";col="var(--c-recovery)"}
+   else if(d>0){t=`Poslední série byla o ${d} s/km pomalejší než první. Příště začni první úsek o kousek volněji.`;col="var(--c-interval)"}
+   else{t=`Poslední série byla o ${-d} s/km rychlejší než první. Máš rezervu – příště můžeš začít svižněji.`;col="var(--c-warmup)"}
+   ins.textContent=t;ins.style.setProperty("--accent",col);ins.hidden=false;
+  }
+ }
+ const missing=r.results.some(x=>x.type!=="recovery"&&!(x.ok&&paceSec(x.sec,x.m)));
+ $("dNote").textContent=missing?"Pomlčka znamená, že GPS nemělo dost dat – slabý signál nebo zamčený displej.":"";
+ $("dNote").hidden=!missing;
+ setState("done");scrollTo(0,0);
+}
+function renderHistory(){
+ const el=$("histList");el.innerHTML="";
+ $("histCount").textContent=hist.length?hist.length:"";
+ hist.forEach(r=>{
+  const b=document.createElement("button");
+  b.innerHTML=`<span class="d num">${esc(dShort(r.date))}</span><span class="n">${esc(r.name)}${r.partial?" · nedokončeno":""}</span><span class="t num">${esc(fmt(r.total))}</span>`;
+  b.addEventListener("click",()=>{rpe=r.rpe||{};openSummary(r,true)});
+  el.appendChild(b);
+ });
+}
+function closeSummary(){hideRpe();setState("ready");scrollTo(0,0)}
+$("closeBtn").addEventListener("click",closeSummary);
+$("backBtn").addEventListener("click",closeSummary);
+$("deleteBtn").addEventListener("click",()=>{
+ if(!confirm("Smazat tento trénink z historie?"))return;
+ hist=hist.filter(r=>r.id!==run.id);store.set("history",hist);renderHistory();closeSummary();
+});
+
+// ---------- ovládání ----------
 $("startBtn").addEventListener("click",startWorkout);
-$("pauseBtn").addEventListener("click",()=>{if(running&&!paused)pause()});
-$("stopBtn").addEventListener("click",()=>stopWorkout());
-$("nextBtn").addEventListener("click",()=>{if(!running||paused)return;if(goNext(Date.now())){announceStep();renderActive();updateUI()}});
-$("workoutSelect").addEventListener("change",e=>selectSource(e.target.value));
-$("reloadBtn").addEventListener("click",async()=>{
- $("fileInfo").textContent="Načítám workout.json z GitHubu…";
- if(await loadRepo())selectSource("repo");
- else{renderSelect();$("fileInfo").textContent="Soubor workout.json se nepodařilo načíst. Je nahraný ve stejném repozitáři jako index.html?"}
-});
-$("jsonFile").addEventListener("change",async e=>{
- const f=e.target.files?.[0];if(!f)return;
- try{
-  const obj=JSON.parse(await f.text());
-  sources.file={name:obj.workoutName||f.name.replace(/\.json$/i,""),steps:parseJson(obj)};
-  store.set("fileWorkout",sources.file);selectSource("file");
- }catch(err){$("fileInfo").textContent="Soubor se nepodařilo načíst: "+err.message}
- e.target.value="";
-});
-$("testVoice").addEventListener("click",()=>{
- unlockAudio();say("Ahoj Rado. Hlasové pokyny jsou připravené.",true);
- if($("beepToggle").checked){[0,1000,2000].forEach(t=>setTimeout(()=>beep(880,.12),t+1800));setTimeout(()=>beep(1320,.4),4800)}
-});
-TOGGLES.forEach(id=>{
- const saved=store.get("set:"+id,null);if(saved!==null)$(id).checked=saved;
- $(id).addEventListener("change",()=>{store.set("set:"+id,$(id).checked);if(id==="gpsToggle")renderList()});
-});
+$("retryBtn").addEventListener("click",loadWorkout);
+$("pauseBtn").addEventListener("click",()=>{state==="running"?pause():state==="paused"&&resume()});
+$("nextBtn").addEventListener("click",nextManual);
+// konec jen podržením – aby se trénink neukončil omylem v běhu
+(()=>{
+ const b=$("stopBtn");let t=null;
+ const cancel=()=>{clearTimeout(t);t=null;b.classList.remove("holding")};
+ b.addEventListener("pointerdown",e=>{e.preventDefault();b.classList.add("holding");t=setTimeout(()=>{cancel();if(navigator.vibrate)navigator.vibrate(60);stopWorkout()},900)});
+ ["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev,()=>{
+  if(t){cancel();$("stopLab").textContent="Drž déle";setTimeout(()=>$("stopLab").textContent="Podrž = konec",1400)}
+ }));
+ b.addEventListener("contextmenu",e=>e.preventDefault());
+ b.addEventListener("keydown",e=>{if(e.key==="Enter"&&confirm("Ukončit trénink?"))stopWorkout()});
+})();
 document.addEventListener("visibilitychange",()=>{
- if(document.visibilityState==="visible"&&running&&!paused){unlockAudio();getWakeLock();tick()}
+ if(document.visibilityState!=="visible")return;
+ if(state==="running"){unlockAudio();getWakeLock();lastPt=null;tick()}
+ else if(state==="ready")loadWorkout();
 });
 if("speechSynthesis"in window)speechSynthesis.getVoices();
-
-// ---------- Start ----------
-(async()=>{
- await loadRepo();
- selectSource(store.get("source","repo"));
- if(!sources.repo&&location.protocol.startsWith("http"))
-  $("fileInfo").textContent+=" Soubor workout.json na GitHubu nebyl nalezen.";
-})();
+renderHistory();loadWorkout();
 </script>
 </body>
 </html>
