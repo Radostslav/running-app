@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>TRImates Run</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#151d30;--muted:#9aa8bd;--text:#f5f7fb;--green:#9af0bd;--orange:#ffca85;--line:#29344a}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#10192b,#090d18 70%);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);min-height:100vh}
+main{max-width:560px;margin:auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}h1{font-size:25px;margin:0;letter-spacing:-.6px} .sub{color:var(--muted);font-size:13px;margin-top:5px}
+.pill{border:1px solid #385344;color:var(--green);border-radius:99px;padding:6px 10px;font-size:12px}
+.card{background:rgba(21,29,48,.95);border:1px solid var(--line);border-radius:22px;padding:18px;margin:12px 0;box-shadow:0 12px 35px #0002}
+label{display:block;font-size:13px;color:var(--muted);margin:0 0 8px}
+button,.filelabel{border:0;border-radius:14px;padding:14px 15px;font-size:15px;font-weight:650;cursor:pointer;background:#26334b;color:var(--text);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+button:disabled{opacity:.4;cursor:not-allowed}.primary{background:var(--green);color:#0b1820}.warn{background:#483325;color:#ffd2a1}.danger{background:#482a36;color:#ffd1db}.wide{width:100%}.row{display:flex;gap:9px}.row>*{flex:1}.filelabel input{display:none}
+select,input[type=text]{width:100%;background:#0f1728;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px}
+.center{text-align:center}.eyebrow{font-size:12px;letter-spacing:1.4px;color:var(--muted);text-transform:uppercase}.stepname{font-size:25px;font-weight:750;margin:10px 0 2px;letter-spacing:-.7px}.timer{font-size:76px;font-weight:800;letter-spacing:-3px;font-variant-numeric:tabular-nums;color:var(--green);line-height:1.15;margin:12px 0}.next{color:var(--muted);font-size:14px;min-height:22px}.progress{height:7px;background:#2a3549;border-radius:9px;overflow:hidden;margin:18px 0 12px}.bar{height:100%;width:0;background:var(--green);transition:width .25s}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#0e1627;border-radius:14px;padding:12px}.stat .val{font-size:22px;font-weight:750;margin-top:5px}.stat .lab{font-size:12px;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:8px}.item{display:flex;align-items:center;gap:12px;background:#0f1728;border:1px solid #202b40;border-radius:13px;padding:11px}.num{width:30px;height:30px;flex-shrink:0;border-radius:9px;background:#27334a;display:grid;place-items:center;color:var(--green);font-weight:750}.itemmain{flex:1}.itemname{font-weight:650;font-size:14px}.itemmeta{font-size:12px;color:var(--muted);margin-top:3px}.small{font-size:12px;color:var(--muted);line-height:1.5}.notice{border-left:3px solid var(--orange);padding:10px 12px;background:#2a211b;border-radius:0 10px 10px 0;color:#f5d7b3;font-size:13px;line-height:1.5}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0}.toggle input{width:20px;height:20px;accent-color:#9af0bd}
+#status{font-size:13px;color:var(--muted);margin-top:10px;min-height:18px}
+footer{text-align:center;color:#65748c;font-size:11px;margin-top:22px}
+</style>
+</head>
+<body>
+<main>
+<header><div><h1>🏃 TRImates Run</h1><div class="sub">Tvůj hlasový intervalový trenér</div></div><span class="pill">BETA · zdarma</span></header>
+
+<section class="card">
+<label for="workoutSelect">Trénink</label>
+<select id="workoutSelect"><option value="demo">TRImates 4× (3–2–1 min) · ukázka</option></select>
+<div class="row" style="margin-top:10px">
+<label class="filelabel" style="flex:1">📂 Načíst JSON<input id="jsonFile" type="file" accept=".json,application/json"></label>
+<button id="resetBtn" style="flex:1">↺ Obnovit ukázku</button>
+</div>
+<div id="fileInfo" class="small" style="margin-top:9px">Ukázkový trénink je připravený. Můžeš načíst svůj JSON ze souboru.</div>
+</section>
+
+<section class="card center">
+<div class="eyebrow" id="phaseLabel">PŘIPRAVENO</div>
+<div class="stepname" id="stepName">TRImates 4× (3–2–1 min)</div>
+<div class="timer" id="clock">00:00</div>
+<div class="next" id="nextName">Stiskni Start a vyběhni.</div>
+<div class="progress"><div class="bar" id="progressBar"></div></div>
+<div class="stats">
+<div class="stat"><div class="lab">Celkový čas</div><div class="val" id="elapsed">00:00</div></div>
+<div class="stat"><div class="lab">Krok</div><div class="val" id="stepCount">—</div></div>
+</div>
+<div class="row" style="margin-top:15px">
+<button class="primary wide" id="startBtn">▶ Start</button>
+<button class="wide" id="pauseBtn" disabled>Ⅱ Pauza</button>
+<button class="danger wide" id="stopBtn" disabled>■ Konec</button>
+</div>
+<button class="wide" id="nextBtn" style="margin-top:9px" disabled>⏭ Další úsek / dokončit kilometr</button>
+<div id="status" aria-live="polite">Hlasové pokyny se aktivují po stisku Start.</div>
+</section>
+
+<section class="card">
+<div style="font-size:17px;font-weight:750;margin-bottom:12px">Průběh tréninku</div>
+<div class="list" id="stepsList"></div>
+</section>
+
+<section class="card">
+<div style="font-size:17px;font-weight:750;margin-bottom:4px">Nastavení</div>
+<div class="toggle"><div><div style="font-weight:650">České hlasové pokyny</div><div class="small">Název úseku, změna a odpočítávání</div></div><input type="checkbox" id="voiceToggle" checked></div>
+<div class="toggle"><div><div style="font-weight:650">Upozornění 10 sekund před změnou</div><div class="small">Krátké oznámení před dalším úsekem</div></div><input type="checkbox" id="countdownToggle" checked></div>
+<div class="toggle"><div><div style="font-weight:650">Vibrace při změně úseku</div><div class="small">Pokud je prohlížeč a telefon podporují vibrace</div></div><input type="checkbox" id="vibrateToggle" checked></div>
+<button class="wide" id="testVoice" style="margin-top:8px">🔊 Otestovat hlas</button>
+</section>
+
+<div class="notice"><b>Důležité pro iPhone:</b> nejdřív vyzkoušej krátký test se zamčenou obrazovkou. Safari může při běhu na pozadí pozastavit časovač nebo hlas. Tato první webová verze proto zatím není zaručenou náhradou nativní sportovní aplikace. Nech telefon nabitý a na prvním běhu měj možnost trénink sledovat i jinak.</div>
+<footer>TRImates Run · lokální prototyp · trénink zůstává v zařízení</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const demoName="TRImates 4× (3–2–1 min)";
+const demo=[
+ {name:"Rozklus",desc:"Rozklus",kind:"distance",meters:1000,seconds:null},
+ ...Array.from({length:4},(_,i)=>[
+  {name:"Tempo na 10 km",desc:"Tempo 10 km",kind:"time",seconds:180},
+  {name:"Lehký meziklus",desc:"Lehky meziklus",kind:"time",seconds:45},
+  {name:"Tempo na 5 km",desc:"Tempo 5 km",kind:"time",seconds:120},
+  {name:"Lehký meziklus",desc:"Lehky meziklus",kind:"time",seconds:45},
+  {name:"Svižně – rychleji než tempo na 5 km",desc:"Svizne, rychleji nez 5 km",kind:"time",seconds:60},
+  ...(i<3?[{name:"Meziklus mezi sériemi",desc:"Meziklus mezi seriemi",kind:"time",seconds:120}]:[])
+ ]).flat(),
+ {name:"Závěrečná chůze",desc:"chůze",kind:"distance",meters:1000,seconds:null}
+];
+let workout=demo.map(x=>({...x})), workoutName=demoName, idx=0, running=false, paused=false, done=false, remaining=0, totalElapsed=0, segmentElapsed=0, lastTick=0, ticker=null, wakeLock=null, distanceMode=false, totalTimed=0;
+const fmt=s=>{s=Math.max(0,Math.floor(s||0));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+function displayDuration(s){return s==null?"1 km":fmt(s)}
+function stepText(s){return s.kind==="distance"?(s.meters/1000)+" km":fmt(s.seconds)}
+function renderList(){
+ const el=$("stepsList");el.innerHTML="";
+ workout.forEach((s,i)=>{const d=document.createElement("div");d.className="item";d.innerHTML=`<div class="num">${i+1}</div><div class="itemmain"><div class="itemname"></div><div class="itemmeta"></div></div>`;d.querySelector(".itemname").textContent=s.name;d.querySelector(".itemmeta").textContent=s.kind==="distance"?`${s.meters} m · ruční ukončení v tomto prototypu`:stepText(s);el.appendChild(d)});
+ $("workoutSelect").options[0].text=workoutName;
+}
+function say(text,force=false){
+ if(!$("voiceToggle").checked&&!force)return;
+ if(!("speechSynthesis" in window)){setStatus("Tento prohlížeč nepodporuje hlasové pokyny.");return}
+ window.speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(text);u.lang="cs-CZ";u.rate=0.93;u.pitch=1;
+ const voices=window.speechSynthesis.getVoices();const v=voices.find(v=>v.lang.toLowerCase().startsWith("cs"));if(v)u.voice=v;
+ window.speechSynthesis.speak(u);
+}
+function setStatus(t){$("status").textContent=t}
+function current(){return workout[idx]}
+function updateUI(){
+ if(done){$("phaseLabel").textContent="DOKONČENO";$("stepName").textContent="Skvělá práce!";$("clock").textContent="✓";$("nextName").textContent="Trénink je hotový."; $("stepCount").textContent=workout.length+"/"+workout.length;$("progressBar").style.width="100%";return}
+ if(!workout.length)return;
+ const s=current();$("phaseLabel").textContent=running?(paused?"POZASTAVENO":(s.kind==="distance"?"VZDÁLENOST":"ČAS")):"PŘIPRAVENO";
+ $("stepName").textContent=running||idx>0?s.name:workoutName;
+ $("clock").textContent=s.kind==="distance"?(running?"RUČNĚ":"1 km"):fmt(remaining||(!running?s.seconds:0));
+ $("nextName").textContent=idx<workout.length-1?"Další: "+workout[idx+1].name:(s.kind==="distance"?"Po dokončení konec tréninku":"Poslední úsek tréninku");
+ $("elapsed").textContent=fmt(totalElapsed);$("stepCount").textContent=(idx+1)+"/"+workout.length;
+ const progress=s.kind==="distance"?0:(s.seconds?((s.seconds-remaining)/s.seconds)*100:0);$("progressBar").style.width=Math.min(100,Math.max(0,progress))+"%";
+ $("startBtn").disabled=running&&!paused;$("startBtn").textContent=paused?"▶ Pokračovat":(running?"Běží…":"▶ Start");
+ $("pauseBtn").disabled=!running;$("pauseBtn").textContent=paused?"▶ Pokračovat":"Ⅱ Pauza";$("stopBtn").disabled=!running;$("nextBtn").disabled=!running||paused;$("nextBtn").textContent=current().kind==="distance"?"⏭ Dokončit úsek („1 km hotovo“)":"⏭ Přeskočit na další úsek";
+}
+async function getWakeLock(){try{if("wakeLock"in navigator)wakeLock=await navigator.wakeLock.request("screen")}catch(e){}}
+function startWorkout(){
+ if(done){resetWorkout()}
+ if(paused){paused=false;running=true;lastTick=Date.now();getWakeLock();ticker=setInterval(tick,250);say("Pokračujeme. "+current().name);updateUI();return}
+ if(running)return;
+ // iOS speech must be activated by a direct user gesture.
+ running=true;paused=false;idx=0;totalElapsed=0;segmentElapsed=0;
+ if(current().kind==="time")remaining=current().seconds;else remaining=0;
+ getWakeLock();say("Trénink začíná. "+current().name+(current().kind==="distance"?". Jeden kilometr.":"."));setStatus("Trénink běží. Nech Safari otevřené a otestuj zamčenou obrazovku.");
+ lastTick=Date.now();ticker=setInterval(tick,250);updateUI();
+}
+function tick(){
+ if(!running||paused||done)return;
+ const now=Date.now();let delta=(now-lastTick)/1000;lastTick=now;
+ // Limit giant jumps if iOS suspends the page. User is told to test background behavior.
+ if(delta>2){setStatus("Časovač se mohl na pozadí pozastavit. Zkontroluj telefon.");delta=1}
+ totalElapsed+=delta;
+ if(current().kind==="time"){
+  remaining-=delta;segmentElapsed+=delta;
+  if($("countdownToggle").checked&&Math.ceil(remaining)===10)say("Za deset sekund. "+(idx<workout.length-1?workout[idx+1].name:"konec tréninku"));
+  if(remaining<=0){advanceStep()}
+ }else{
+  // Distance steps deliberately require manual completion in the web prototype.
+  remaining=0;
+ }
+ updateUI();
+}
+function advanceStep(){
+ if(idx>=workout.length-1){finishWorkout();return}
+ idx++;segmentElapsed=0;remaining=current().kind==="time"?current().seconds:0;
+ if($("vibrateToggle").checked&&navigator.vibrate)navigator.vibrate([180,100,180]);
+ say(current().name+(current().kind==="distance"?". Jeden kilometr.":"."));setStatus("Nový úsek: "+current().name);updateUI();
+}
+function finishWorkout(){done=true;running=false;paused=false;clearInterval(ticker);ticker=null;if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}say("Trénink dokončen. Skvělá práce!");setStatus("Trénink dokončen.");updateUI()}
+function pauseWorkout(){if(!running)return;if(paused){paused=false;lastTick=Date.now();getWakeLock();ticker=setInterval(tick,250);say("Pokračujeme.");}else{paused=true;clearInterval(ticker);ticker=null;if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}window.speechSynthesis?.cancel();setStatus("Trénink pozastaven.");}updateUI()}
+function stopWorkout(){running=false;paused=false;done=false;clearInterval(ticker);ticker=null;if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}window.speechSynthesis?.cancel();idx=0;totalElapsed=0;remaining=0;setStatus("Trénink ukončen.");updateUI()}
+function resetWorkout(){stopWorkout();done=false;idx=0;totalElapsed=0;remaining=0;renderList();updateUI()}
+function normalizeKey(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
+function parseJson(obj){
+ const out=[];
+ const segs=obj.workoutSegments||[];
+ function visit(steps){
+  (steps||[]).forEach(s=>{
+   if(s.type==="RepeatGroupDTO"||s.stepType?.stepTypeKey==="repeat"){
+    const reps=Number(s.numberOfIterations||s.endConditionValue||1);
+    for(let r=0;r<reps;r++)visit(s.workoutSteps||[]);
+    return;
+   }
+   const key=s.stepType?.stepTypeKey||"";
+   const name=(s.description||"").trim();
+   const cond=s.endCondition?.conditionTypeKey||"";
+   if(key==="warmup"||key==="cooldown"){
+    if(cond==="lap.button"||cond==="distance"){
+     out.push({name:name?name[0].toUpperCase()+name.slice(1):(key==="warmup"?"Rozklus":"Závěrečný úsek"),desc:name,kind:"distance",meters:Number(s.endConditionValue||1000),seconds:null});
+    }else if(cond==="time")out.push({name:name|| (key==="warmup"?"Rozklus":"Závěrečný úsek"),desc:name,kind:"time",seconds:Number(s.endConditionValue||0)});
+    return;
+   }
+   if(key==="interval"||key==="recovery"||cond==="time"){
+    out.push({name:name|| (key==="recovery"?"Meziklus":"Interval"),desc:name,kind:"time",seconds:Number(s.endConditionValue||0)});
+   }
+  });
+ }
+ segs.forEach(seg=>visit(seg.workoutSteps||[]));
+ if(!out.length)throw new Error("V JSONu se nepodařilo najít žádné rozpoznatelné kroky tréninku.");
+ return out;
+}
+$("jsonFile").addEventListener("change",async e=>{
+ const f=e.target.files?.[0];if(!f)return;
+ try{const obj=JSON.parse(await f.text());const parsed=parseJson(obj);stopWorkout();workout=parsed;workoutName=obj.workoutName||f.name.replace(/\.json$/i,"");$("fileInfo").textContent=`Načteno: ${f.name} · ${parsed.length} kroků. Kroky označené vzdáleností se v této verzi ukončují ručně.`;renderList();updateUI();setStatus("JSON načten. Zkontroluj pořadí a názvy úseků.");}
+ catch(err){$("fileInfo").textContent="Soubor se nepodařilo načíst: "+err.message}
+ e.target.value="";
+});
+$("resetBtn").addEventListener("click",()=>{workout=demo.map(x=>({...x}));workoutName=demoName;$("fileInfo").textContent="Ukázkový trénink je připravený.";resetWorkout()});
+$("startBtn").addEventListener("click",startWorkout);
+$("pauseBtn").addEventListener("click",pauseWorkout);
+$("stopBtn").addEventListener("click",stopWorkout);
+$("nextBtn").addEventListener("click",()=>{if(!running||paused)return;advanceStep()});
+$("testVoice").addEventListener("click",()=>say("Ahoj Rado. Hlasové pokyny jsou připravené. Za deset sekund začíná svižný běh.",true));
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&running&&!paused){setStatus("Aplikace je znovu na obrazovce. Zkontroluj časovač.");getWakeLock()}});
+window.speechSynthesis?.getVoices();
+renderList();updateUI();
+</script>
+</body>
+</html>
