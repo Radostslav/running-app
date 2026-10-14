@@ -125,6 +125,20 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
 .hold svg.ring circle{fill:none;stroke:var(--run-text);stroke-width:4;stroke-dasharray:214;stroke-dashoffset:214;transition:stroke-dashoffset .15s}
 .hold.holding svg.ring circle{stroke-dashoffset:0;transition:stroke-dashoffset .9s linear}
 
+/* výběr tréninku */
+.chooser{margin:var(--s-xs) 0 0 calc(-1 * var(--s-xs))}
+.picklist{display:flex;flex-direction:column;gap:var(--s-xs);margin-top:var(--s-m);max-height:60vh;overflow:auto}
+.pick{display:flex;align-items:center;gap:var(--s-s);width:100%;min-height:72px;padding:var(--s-s);border-radius:var(--r-m);border:2px solid var(--border);text-align:left}
+.pick:active{background:var(--press)}
+.pick[aria-checked=true]{border-color:var(--text)}
+.pick .radio{flex:0 0 24px;width:24px;height:24px;border-radius:50%;border:2px solid var(--border-strong);display:grid;place-items:center}
+.pick[aria-checked=true] .radio{border-color:var(--text)}
+.pick[aria-checked=true] .radio::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--text)}
+.pick .pmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--s-2xs)}
+.pick .meta{font-size:var(--t-sm);color:var(--text-2)}
+.strip.mini{height:8px;gap:2px;margin-top:var(--s-2xs)}
+.strip.mini i{border-radius:2px;min-width:2px}
+
 /* hodnocení série */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9;animation:fade .25s}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);color:var(--text);border-radius:var(--r-l) var(--r-l) 0 0;padding:var(--s-xs) var(--s-m) calc(env(safe-area-inset-bottom) + var(--s-s));animation:up .3s cubic-bezier(.2,.9,.3,1)}
@@ -149,7 +163,8 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
 .insight::before{content:"";flex:0 0 4px;border-radius:2px;background:var(--accent,var(--m-recovery))}
 .card{background:var(--surface);border-radius:var(--r-m);padding:0 var(--s-s)}
 .grid{display:grid;align-items:stretch}
-.grid>div{display:flex;align-items:center;justify-content:flex-end;min-height:48px;border-top:1px solid var(--border);font-size:var(--t-md);font-weight:var(--w-bold);font-variant-numeric:tabular-nums}
+.grid>div:not(.rl){padding-left:var(--s-xs)}
+.grid>div{display:flex;align-items:center;justify-content:flex-end;min-height:48px;border-top:1px solid var(--border);font-size:var(--t-md);font-weight:var(--w-bold);font-variant-numeric:tabular-nums;font-stretch:80%;font-variation-settings:"wdth" 80;white-space:nowrap}
 .grid>.hd{min-height:40px;border-top:0;font-size:var(--t-sm);color:var(--text-2)}
 .grid>.rl{justify-content:flex-start;font-size:var(--t-base)}
 .grid .mut{color:var(--text-2);font-weight:var(--w-regular)}
@@ -175,6 +190,7 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
  <div class="brand"><i></i>TRImates Run</div>
  <p class="kicker" id="rKicker">&nbsp;</p>
  <h1 id="rName">&nbsp;</h1>
+ <button class="btn-tertiary chooser" id="chooseBtn" data-only="ready" hidden>Vybrat jiný trénink</button>
  <p class="loading-line" data-only="loading">Načítám trénink z GitHubu…</p>
  <div data-only="ready">
   <div class="facts" id="rFacts"></div>
@@ -232,12 +248,23 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
  <div class="dstats" id="dStats"></div>
  <div class="section" id="insightSec" hidden><div class="insight" id="insight"></div></div>
  <div class="section" id="seriesTbl" hidden><h3>Tempo v sériích, min/km</h3><div class="card"><div class="grid" id="seriesGrid"></div></div><p class="note" id="dNote" hidden></p></div>
- <div class="section" id="otherSec" hidden><h3>Rozklus a výklus</h3><div class="card rows" id="otherRows"></div></div>
+ <div class="section" id="otherSec" hidden><h3 id="otherTitle">Rozklus a výklus</h3><div class="card rows" id="otherRows"></div></div>
  <div class="del-wrap"><button class="btn-tertiary danger" id="deleteBtn" hidden>Smazat z historie</button></div>
  <div class="dock"><button class="btn btn-primary" id="closeBtn">Zpět na přehled</button></div>
 </section>
 
 <div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button id="toastUndo">Vrátit</button></div>
+
+<!-- VÝBĚR TRÉNINKU -->
+<div class="scrim" id="pickScrim" hidden></div>
+<div class="sheet" id="pickSheet" hidden role="dialog" aria-labelledby="pickTitle">
+ <div class="inner">
+  <div class="grab"></div>
+  <h2 id="pickTitle">Vyber trénink</h2>
+  <div class="picklist" id="pickList" role="radiogroup" aria-labelledby="pickTitle"></div>
+  <button class="btn-tertiary" id="pickClose">Zavřít</button>
+ </div>
+</div>
 
 <!-- HODNOCENÍ SÉRIE -->
 <div class="scrim" id="rpeScrim" hidden></div>
@@ -256,7 +283,7 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
 const $=id=>document.getElementById(id);
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const PHASE_NAME={warmup:"Rozklus",interval:"Interval",recovery:"Meziklus",cooldown:"Výklus",paused:"Pozastaveno"};
-const PHASE_COLOR={warmup:"#8DBFFF",interval:"#FF5B21",recovery:"#5FD896",cooldown:"#8DBFFF",paused:"#C8CCD1"};
+const PHASE_COLOR={warmup:"#8DBFFF",interval:"#FF6B2C",recovery:"#5FD896",cooldown:"#8DBFFF",paused:"#C8CCD1"};
 const rpeHue=n=>Math.round(140-(n-1)*(130/9));
 
 // ---------- formátování ----------
@@ -265,20 +292,20 @@ const kmNum=m=>(m/1000).toFixed(m%1000===0?0:m>=10000?1:2).replace(".",",");
 const km=m=>kmNum(m)+" km";
 const paceSec=(sec,m)=>m>=50?sec/(m/1000):null;
 const paceTxt=(sec,m)=>{const p=paceSec(sec,m);return p?fmt(p):"—"};
-const stepText=s=>s.kind==="distance"?km(s.meters):fmt(s.seconds);
+const stepText=s=>s.kind==="distance"?km(s.meters):s.kind==="open"?"volně":fmt(s.seconds);
 const durLabel=sec=>sec%60===0?sec/60+" min":fmt(sec);
 const dShort=t=>new Date(t).toLocaleDateString("cs-CZ",{day:"numeric",month:"numeric"});
 const dLong=t=>new Date(t).toLocaleDateString("cs-CZ",{weekday:"long",day:"numeric",month:"long"});
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const isWalk=s=>/chůz|chuz|walk/i.test(s.name);
-const estSec=s=>s.kind==="time"?s.seconds:s.meters*(isWalk(s)?.66:.36);
+const estSec=s=>s.kind==="time"?s.seconds:s.kind==="open"?(s.type==="cooldown"?300:360):s.meters*(isWalk(s)?.66:.36);
 
 // ---------- stav aplikace ----------
 let state="loading";
 function setState(s){
  state=s;document.body.dataset.state=s;
  document.querySelectorAll("[data-only]").forEach(el=>{el.hidden=!el.dataset.only.split(" ").includes(s)});
- if(s==="ready")$("histBox").hidden=!hist.length;
+ if(s==="ready"){$("histBox").hidden=!hist.length;$("chooseBtn").hidden=library.length<2;$("chooseBtn").textContent=`Vybrat jiný trénink (${library.length})`}
  if(s!=="running"&&s!=="paused"){document.body.dataset.phase="";setTheme(null)}
  render();
 }
@@ -291,9 +318,12 @@ function parseJson(obj){
  function mk(s,series){
   const key=s.stepType?.stepTypeKey||"",cond=s.endCondition?.conditionTypeKey||"";
   const type=["warmup","interval","recovery","cooldown"].includes(key)?key:(key==="rest"?"recovery":"interval");
-  const raw=(s.description||"").trim(),name=raw?raw[0].toUpperCase()+raw.slice(1):fb[type];
-  if(cond==="time")return{name,type,series,kind:"time",seconds:Number(s.endConditionValue)||0};
-  if(cond==="distance"||cond==="lap.button")return{name,type,series,kind:"distance",meters:Number(s.endConditionValue)||1000};
+  const raw=(s.description||"").trim(),v=Number(s.endConditionValue)||0;
+  let name=raw?raw[0].toUpperCase()+raw.slice(1):fb[type];
+  if(cond==="time"){if(!raw&&type==="interval")name="Interval "+durLabel(v);return{name,type,series,kind:"time",seconds:v}}
+  if(cond==="distance")return{name,type,series,kind:"distance",meters:v||1000};
+  // „do stisku tlačítka“: hodnota od 500 m ber jako vzdálenost, jinak úsek ukončíš sám
+  if(cond==="lap.button")return v>=500?{name,type,series,kind:"distance",meters:v}:{name,type,series,kind:"open"};
   return null;
  }
  function visit(steps,series){
@@ -306,39 +336,80 @@ function parseJson(obj){
     }
     return;
    }
-   const st=mk(s,series);if(st&&(st.kind==="distance"||st.seconds>0))out.push(st);
+   const st=mk(s,series);if(st&&(st.kind!=="time"||st.seconds>0))out.push(st);
   });
  }
  (obj.workoutSegments||[]).forEach(seg=>visit(seg.workoutSteps,0));
  if(!out.length)throw new Error("v JSONu nejsou kroky tréninku");
+ if(!maxS)maxS=inferSeries(out);
  const lastInt={};out.forEach((s,i)=>{if(s.series&&s.type==="interval")lastInt[s.series]=i});
  Object.values(lastInt).forEach(i=>out[i].seriesEnd=true);
  return{name:obj.workoutName||"Trénink",steps:out,seriesCount:maxS};
 }
+// Trénink zapsaný bez opakování (např. 2× 8-4-2-1): série se poznají podle opakujícího se vzoru intervalů
+function inferSeries(out){
+ const ints=out.map((s,i)=>s.type==="interval"&&s.kind==="time"?i:-1).filter(i=>i>=0);
+ const d=ints.map(i=>out[i].seconds);
+ for(let p=2;p<=d.length/2;p++){
+  if(d.length%p||!d.every((x,k)=>x===d[k%p]))continue;
+  const reps=d.length/p;
+  for(let r=0;r<reps;r++){
+   const from=ints[r*p],to=r<reps-1?ints[(r+1)*p]-1:ints[ints.length-1];
+   for(let i=from;i<=to;i++)out[i].series=r+1;
+  }
+  return reps;
+ }
+ return 0;
+}
+function splitName(name){
+ const m=name.match(/^(.*?)\s+(\d{1,2}\.\s?\d{1,2}\.\s?\d{4})$/);
+ return{title:m?m[1]:name,date:m?m[2].replace(/\s/g,""):""};
+}
 function applyWorkout(w){
  workout=w.steps;seriesCount=w.seriesCount||0;
- const m=w.name.match(/^(.*?)\s+(\d{1,2}\.\s?\d{1,2}\.\s?\d{4})$/);
- workoutName=m?m[1]:w.name;workoutDate=m?m[2].replace(/\s/g,""):"";
+ const n=splitName(w.name);workoutName=n.title;workoutDate=n.date;
  buildReady();
 }
+const REPO="Radostslav/running-app",DIR="treninky";
+let library=store.get("library",[]),selected=store.get("selectedWorkout",null),lastLoad=0;
+async function fetchLibrary(){
+ const t=Date.now();
+ const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${DIR}`,{cache:"no-store"});
+ if(r.status===404)return null; // složka zatím neexistuje
+ if(!r.ok)throw new Error("GitHub API "+r.status);
+ const files=(await r.json()).filter(f=>f.type==="file"&&/\.json$/i.test(f.name));
+ const list=await Promise.all(files.map(async f=>{
+  try{const x=await fetch(f.download_url+"?t="+t,{cache:"no-store"});if(!x.ok)return null;return{file:f.name,...parseJson(await x.json())}}
+  catch(e){return null}
+ }));
+ return list.filter(Boolean);
+}
 async function loadWorkout(){
+ if(active())return;
+ if(Date.now()-lastLoad<20000&&library.length){if(!workout.length)selectWorkout(selected);setState("ready");return}
  if(!workout.length)setState("loading");
- try{
-  const r=await fetch("workout.json?t="+Date.now(),{cache:"no-store"});
-  if(!r.ok)throw new Error("HTTP "+r.status);
-  const w=parseJson(await r.json());store.set("lastWorkout",w);applyWorkout(w);
- }catch(e){
-  const c=store.get("lastWorkout",null);
-  if(c&&!workout.length)applyWorkout(c);
-  if(!workout.length){setState("error");return}
+ let lib=null;
+ try{lib=await fetchLibrary()}catch(e){lib=library.length?library:null}
+ if(!lib||!lib.length){
+  // záloha: jeden soubor workout.json v kořeni repozitáře
+  try{const x=await fetch("workout.json?t="+Date.now(),{cache:"no-store"});if(x.ok)lib=[{file:"workout.json",...parseJson(await x.json())}]}catch(e){}
  }
+ if(lib&&lib.length){lib.sort((a,b)=>a.name.localeCompare(b.name,"cs"));library=lib;store.set("library",lib);lastLoad=Date.now()}
+ if(!library.length){const c=store.get("lastWorkout",null);if(c)library=[{file:"workout.json",...c}]}
+ if(!library.length){setState("error");return}
+ if(active())return;
+ selectWorkout(selected);
  if(state==="loading"||state==="error"||state==="ready")setState("ready");
+}
+function selectWorkout(file){
+ const w=library.find(x=>x.file===file)||library[0];
+ selected=w.file;store.set("selectedWorkout",selected);applyWorkout(w);
 }
 
 // ---------- obrazovka přípravy ----------
-function buildStrip(el){
+function buildStrip(el,steps=workout){
  el.innerHTML="";
- workout.forEach(s=>{const i=document.createElement("i");i.dataset.type=s.type;i.style.flexGrow=estSec(s);el.appendChild(i)});
+ steps.forEach(s=>{const i=document.createElement("i");i.dataset.type=s.type;i.style.flexGrow=estSec(s);el.appendChild(i)});
 }
 function buildReady(){
  $("rKicker").textContent=workoutDate?"Trénink na "+workoutDate.replace(/^(\d+)\.(\d+)\.\d+$/,"$1. $2."):"Dnešní trénink";
@@ -347,7 +418,10 @@ function buildReady(){
  const dist=workout.reduce((a,s)=>a+(s.kind==="distance"?s.meters:0),0);
  const f=[["≈ "+Math.round(total/60),"minut"]];
  if(seriesCount)f.push([seriesCount,seriesCount<5?"série":"sérií"]);
- if(dist)f.push([kmNum(dist),"km klusu a chůze"]);
+ if(dist){
+  const t=new Set(workout.filter(s=>s.kind==="distance").map(s=>s.type));
+  f.push([kmNum(dist),t.has("warmup")&&t.has("cooldown")?"km rozklus a výklus":t.has("warmup")?"km rozklus":t.has("cooldown")?"km výklus":"km na vzdálenost"]);
+ }
  $("rFacts").innerHTML=f.map(([a,b])=>`<div class="fact"><b class="num">${esc(a)}</b><span>${esc(b)}</span></div>`).join("");
  buildStrip($("rStrip"));buildStrip($("runStrip"));
  const pl=$("planList");pl.innerHTML="";let lastS=-1;
@@ -412,11 +486,14 @@ function goNext(endT,natural){
  if(idx>=workout.length-1){finishWorkout(false);return false}
  enterStep(idx+1,endT);return true;
 }
+function spoken(s){
+ return s.name+(s.kind==="distance"?". "+km(s.meters):s.kind==="open"?". Až budeš hotový, ťukni na Úsek hotový":"");
+}
 function announceStep(){
  const s=cur();
  if(navigator.vibrate)navigator.vibrate([180,100,180]);
  beep(1320,.4);
- say(s.name+(s.kind==="distance"?". "+km(s.meters):"")+(pendingRpe?". Ohodnoť sérii.":"."));
+ say(spoken(s)+(pendingRpe?". Ohodnoť sérii.":"."));
  if(pendingRpe){showRpe(pendingRpe);pendingRpe=null}
 }
 function startWorkout(){
@@ -425,7 +502,7 @@ function startWorkout(){
  results=[];rpe={};pendingRpe=null;elapsedMs=0;idx=0;skippedNote="";resumedAt=Date.now();
  state="running";enterStep(0,resumedAt);setState("running");
  getWakeLock();startGps();
- const s=cur();say("Trénink začíná. "+s.name+(s.kind==="distance"?". "+km(s.meters):"")+".");
+ say("Trénink začíná. "+spoken(cur())+".");
  ticker=setInterval(tick,200);
 }
 function tick(){
@@ -510,6 +587,7 @@ function render(){
  $("totalLabel").textContent=fmt(elapsedNow()/1000);
  let prog=0;const c=$("clock");
  if(s.kind==="time"){const r=remainingMs();c.textContent=fmt(Math.ceil(r/1000));prog=1-r/(s.seconds*1000);fitClock()}
+ else if(s.kind==="open"){c.textContent=fmt((elapsedNow()-stepStartElapsed)/1000);prog=0}
  else{const live=stepDist>0||gpsState==="ok";c.innerHTML=esc(live?(stepDist/1000).toFixed(2).replace(".",","):kmNum(s.meters))+"<small>km</small>";prog=stepDist/s.meters}
  fitClock();
  prog=Math.min(1,Math.max(0,prog));
@@ -517,7 +595,7 @@ function render(){
  [...$("runStrip").children].forEach((el,i)=>{el.classList.toggle("done",i<idx);el.classList.toggle("cur",i===idx);if(i===idx)el.style.setProperty("--p",prog*100+"%")});
  const stepSec=(elapsedNow()-stepStartElapsed)/1000;
  let live="";
- if(gpsState==="denied")live=s.kind==="distance"?"Bez polohy – úsek ukonči tlačítkem":"Bez polohy – tempo se neměří";
+ if(gpsState==="denied")live=s.kind!=="time"?"Bez polohy – úsek ukonči tlačítkem":"Bez polohy – tempo se neměří";
  else if(gpsState==="wait")live="Hledám GPS…";
  else if(gpsState==="weak"&&stepDist<80)live="Slabý GPS signál";
  else if(stepDist>=80&&stepSec>8)live=`${paceTxt(stepSec,stepDist)} /km · ${Math.round(stepDist)} m`;
@@ -531,7 +609,8 @@ function render(){
  $("icPause").style.display=state==="paused"?"none":"";$("icPlay").style.display=state==="paused"?"":"none";
  $("pauseBtn").setAttribute("aria-label",state==="paused"?"Pokračovat":"Pauza");
  $("nextBtn").classList.toggle("gone",state==="paused");
- $("nextLab").textContent=s.kind==="distance"?"Úsek hotový":"Další úsek";
+ $("nextLab").textContent=s.kind!=="time"?"Úsek hotový":"Další úsek";
+ $("stepBar").parentElement.style.visibility=s.kind==="open"?"hidden":"";
 }
 
 // velké číslo se vždy vejde na šířku displeje
@@ -558,6 +637,9 @@ for(let n=1;n<=10;n++){
  $("rpeGrid").appendChild(b);
 }
 $("rpeSkip").addEventListener("click",hideRpe);
+$("chooseBtn").addEventListener("click",openPicker);
+$("pickClose").addEventListener("click",closePicker);
+$("pickScrim").addEventListener("click",closePicker);
 $("rpeScrim").addEventListener("click",hideRpe);
 
 // ---------- souhrn ----------
@@ -580,12 +662,12 @@ function openSummary(r,fromHistory){
  const hasRpe=keys.some(k=>r.rpe&&r.rpe[k]);
  if(keys.length){
   const ref=bySer[keys[0]];
-  const g=$("seriesGrid");g.style.gridTemplateColumns=`1fr repeat(${cols},minmax(58px,auto))${hasRpe?" 56px":""}`;
-  let h='<div class="hd rl"></div>';
+  const g=$("seriesGrid");g.style.gridTemplateColumns=`auto repeat(${cols},minmax(0,1fr))${hasRpe?" auto":""}`;
+  let h='<div class="hd rl">Série</div>';
   for(let c=0;c<cols;c++){const x=ref[c]||bySer[keys.find(k=>bySer[k][c])][c];h+=`<div class="hd">${esc(x.plan?durLabel(x.plan):x.name)}</div>`}
   if(hasRpe)h+='<div class="hd">Pocit</div>';
   keys.forEach(k=>{
-   h+=`<div class="rl">${k}. série</div>`;
+   h+=`<div class="rl">${k}.</div>`;
    for(let c=0;c<cols;c++){const x=bySer[k][c];h+=x&&x.ok&&paceSec(x.sec,x.m)?`<div class="num">${paceTxt(x.sec,x.m)}</div>`:'<div class="num mut">—</div>'}
    if(hasRpe){const v=r.rpe[k];h+=v?`<div><span class="pill num" style="--h:${rpeHue(v)}">${v}</span></div>`:'<div class="mut">—</div>'}
   });
@@ -596,6 +678,7 @@ function openSummary(r,fromHistory){
  const other=r.results.filter(x=>!x.series&&x.type!=="recovery");
  $("otherRows").innerHTML=other.map(x=>`<div class="r"><b>${esc(x.name)}</b><span class="num">${fmt(x.sec)}${x.ok&&x.m?" · "+km(x.m):""}</span><em class="num">${x.ok&&paceSec(x.sec,x.m)?paceTxt(x.sec,x.m)+" /km":"—"}</em></div>`).join("");
  $("otherSec").hidden=!other.length;
+ $("otherTitle").textContent=other.every(x=>x.type==="warmup"||x.type==="cooldown")?"Rozklus a výklus":"Úseky";
 
  // trenérský postřeh: první vs. poslední série
  const ins=$("insight");$("insightSec").hidden=true;
@@ -615,6 +698,25 @@ function openSummary(r,fromHistory){
  $("dNote").hidden=!missing;
  setState("done");scrollTo(0,0);
 }
+function workoutMeta(w){
+ const total=w.steps.reduce((a,s)=>a+estSec(s),0);
+ return "≈ "+Math.round(total/60)+" min"+(w.seriesCount?" · "+w.seriesCount+" "+(w.seriesCount<5?"série":"sérií"):"");
+}
+function openPicker(){
+ const el=$("pickList");el.innerHTML="";
+ library.forEach(w=>{
+  const b=document.createElement("button");b.className="pick";b.setAttribute("role","radio");
+  b.setAttribute("aria-checked",w.file===selected?"true":"false");
+  b.innerHTML=`<span class="radio" aria-hidden="true"></span><span class="pmain"><b></b><span class="meta"></span><span class="strip mini" aria-hidden="true"></span></span>`;
+  const n=splitName(w.name);b.querySelector("b").textContent=n.title;
+  b.querySelector(".meta").textContent=workoutMeta(w)+(n.date?" · "+n.date.replace(/^(\d+)\.(\d+)\.\d+$/,"$1. $2."):"");
+  buildStrip(b.querySelector(".strip"),w.steps);
+  b.addEventListener("click",()=>{selectWorkout(w.file);closePicker();setState("ready");scrollTo(0,0)});
+  el.appendChild(b);
+ });
+ $("pickSheet").hidden=false;$("pickScrim").hidden=false;
+}
+function closePicker(){$("pickSheet").hidden=true;$("pickScrim").hidden=true}
 function renderHistory(){
  const el=$("histList");el.innerHTML="";
  $("histCount").textContent=hist.length?hist.length:"";
