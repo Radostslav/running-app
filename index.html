@@ -13,213 +13,65 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
-<title>TRImates Run</title>
-<style>
-/* =========================================================
-   Design systém podle Practical UI (Adham Dannaway)
-   – mezery v krocích po 8 pt, typová škála 1,25, jen regular a bold
-   – kontrast textu ≥ 4,5:1, UI prvků ≥ 3:1, bez čistě černé a bílé
-   – 3 váhy tlačítek, cíle ≥ 48 pt, žádná zakázaná tlačítka
-   ========================================================= */
-:root{
- --s-2xs:4px;--s-xs:8px;--s-s:16px;--s-m:24px;--s-l:32px;--s-xl:48px;--s-2xl:80px;
- --t-sm:14px;--t-base:17px;--t-md:21px;--t-lg:27px;--t-xl:33px;--t-2xl:41px;--t-3xl:52px;
- --w-regular:400;--w-bold:700;--w-display:800;
- --bg:#F3F4F2;--surface:#FFFFFF;--text:#1C1F23;--text-2:#5C6269;--border-strong:#7C828A;--border:#E2E4E1;--press:#E9EBE8;
- --danger:#B3261E;
- --c-interval:#FF6B2C;--c-recovery:#5FD896;--c-warmup:#8DBFFF;--c-paused:#C8CCD1;
- --m-interval:#D9480F;--m-recovery:#1B8F53;--m-warmup:#2F74D0;
- --run-text:#121417;--run-text-2:rgba(18,20,23,.8);--run-border:rgba(18,20,23,.7);
- --r-s:8px;--r-m:16px;--r-l:24px;
- --font:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
- color-scheme:light;
-}
-@media (prefers-color-scheme:dark){:root{
- --bg:#0E1012;--surface:#181B1F;--text:#EEEFEC;--text-2:#9AA1A9;--border-strong:#6B7078;--border:#262A2F;--press:#20242A;
- --danger:#FF8A7A;--m-interval:#FF6B2C;--m-recovery:#5FD896;--m-warmup:#8DBFFF;color-scheme:dark}}
-*{box-sizing:border-box}[hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%;background:var(--bg)}
-body{margin:0;font-family:var(--font);font-size:var(--t-base);line-height:1.5;font-weight:var(--w-regular);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;transition:background-color .45s ease}
-button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-button:focus-visible,summary:focus-visible{outline:3px solid currentColor;outline-offset:3px;border-radius:var(--r-s)}
-.num{font-variant-numeric:tabular-nums}
-.screen{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + var(--s-s)) var(--s-m) calc(env(safe-area-inset-bottom) + 136px);min-height:100vh;min-height:100svh}
-
-/* tlačítka: primární, sekundární, terciární */
-.btn{display:flex;align-items:center;justify-content:center;gap:var(--s-xs);min-height:48px;border-radius:999px;font-weight:var(--w-bold);font-size:var(--t-base);transition:transform .12s,background-color .12s}
-.btn:active{transform:scale(.97)}
-.btn-primary{background:var(--text);color:var(--bg);height:64px;font-size:var(--t-md);width:100%}
-.btn-tertiary{min-height:48px;padding:0 var(--s-xs);font-weight:var(--w-bold);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px}
-.btn-tertiary.danger{color:var(--danger)}
-
-/* příprava */
-.brand{display:flex;align-items:center;gap:var(--s-xs);min-height:32px;font-weight:var(--w-bold);font-size:var(--t-sm);color:var(--text-2)}
-.brand i{width:10px;height:10px;border-radius:3px;background:var(--m-interval)}
-.kicker{margin:var(--s-l) 0 var(--s-xs);color:var(--text-2)}
-h1{margin:0;font-size:var(--t-2xl);line-height:1.05;font-weight:var(--w-bold);font-stretch:72%;font-variation-settings:"wdth" 72;letter-spacing:-.015em}
-.facts{display:flex;gap:var(--s-l);margin:var(--s-m) 0}
-.fact b{display:block;font-size:var(--t-2xl);line-height:1.1;font-weight:var(--w-bold);font-stretch:72%;font-variation-settings:"wdth" 72;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-.fact span{font-size:var(--t-sm);color:var(--text-2)}
-.strip{display:flex;gap:3px;height:40px}
-.strip i{border-radius:4px;min-width:3px;background:var(--seg)}
-[data-type=interval]{--seg:var(--m-interval)}[data-type=recovery]{--seg:var(--m-recovery)}[data-type=warmup],[data-type=cooldown]{--seg:var(--m-warmup)}
-.legend{display:flex;flex-wrap:wrap;gap:var(--s-xs) var(--s-s);margin-top:var(--s-xs);font-size:var(--t-sm);color:var(--text-2)}
-.legend span{display:flex;align-items:center;gap:var(--s-xs)}
-.legend span::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--seg)}
-.legend .l1{--seg:var(--m-warmup)}.legend .l2{--seg:var(--m-interval)}.legend .l3{--seg:var(--m-recovery)}
-.panels{margin-top:var(--s-xl);display:flex;flex-direction:column;gap:var(--s-xs)}
-.panel{background:var(--surface);border-radius:var(--r-m)}
-summary{list-style:none;display:flex;align-items:center;gap:var(--s-s);min-height:56px;padding:0 var(--s-s);font-weight:var(--w-bold);cursor:pointer}
-summary::-webkit-details-marker{display:none}
-summary .cnt{color:var(--text-2);font-weight:var(--w-regular);font-size:var(--t-sm);margin-left:auto}
-summary svg{transition:transform .2s;color:var(--text-2)}details[open] summary svg{transform:rotate(90deg)}
-.plan{list-style:none;margin:0;padding:0 var(--s-s) var(--s-xs)}
-.plan li{display:grid;grid-template-columns:10px 1fr auto;align-items:center;gap:var(--s-s);min-height:44px;border-top:1px solid var(--border)}
-.plan li::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--seg)}
-.plan .sh{display:block;min-height:0;padding:var(--s-s) 0 var(--s-2xs);border:0;font-size:var(--t-sm);font-weight:var(--w-bold);color:var(--text-2)}
-.plan .sh::before{display:none}
-.plan .v{color:var(--text-2)}
-.hist{padding:0 var(--s-xs) var(--s-xs)}
-.hist button{display:grid;grid-template-columns:56px 1fr auto;align-items:center;gap:var(--s-s);width:100%;min-height:56px;text-align:left;padding:0 var(--s-xs);border-radius:var(--r-s)}
-.hist button:active{background:var(--press)}
-.hist .d{font-weight:var(--w-bold)}.hist .n{font-size:var(--t-sm);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hist .t{font-weight:var(--w-bold)}
-.hints{list-style:none;margin:var(--s-m) 0 0;padding:0;display:flex;flex-direction:column;gap:var(--s-xs);font-size:var(--t-sm);color:var(--text-2)}
-.hints li{display:flex;gap:var(--s-xs);align-items:flex-start}
-.hints svg{flex:0 0 18px;margin-top:2px}
-.err,.loading-line{margin-top:var(--s-m);color:var(--text-2)}
-.dock{position:fixed;left:0;right:0;bottom:0;padding:var(--s-m) var(--s-m) calc(env(safe-area-inset-bottom) + var(--s-s));background:linear-gradient(to bottom,transparent,var(--bg) 40%);z-index:5}
-.dock .btn{max-width:512px;margin:0 auto}
-
-/* běh */
-body[data-phase=interval]{--phase:var(--c-interval)}body[data-phase=recovery]{--phase:var(--c-recovery)}
-body[data-phase=warmup],body[data-phase=cooldown]{--phase:var(--c-warmup)}body[data-phase=paused]{--phase:var(--c-paused)}
-body[data-state=running],body[data-state=paused]{background:var(--phase);color:var(--run-text)}
-html:has(body[data-state=running]),html:has(body[data-state=paused]){background:var(--phase)}
-.run{display:flex;flex-direction:column;padding-bottom:calc(env(safe-area-inset-bottom) + var(--s-m));color:var(--run-text)}
-.rstrip{display:flex;gap:2px;height:8px}
-.rstrip i{border-radius:2px;min-width:2px;background:rgba(18,20,23,.16)}
-.rstrip i.done{background:var(--run-text-2)}
-.rstrip i.cur{background:linear-gradient(to right,var(--run-text-2) var(--p,0%),rgba(18,20,23,.16) var(--p,0%))}
-.rmeta{display:flex;justify-content:space-between;align-items:center;min-height:32px;margin-top:var(--s-xs);font-weight:var(--w-bold)}
-.rmeta .tot{font-weight:var(--w-regular);color:var(--run-text-2)}
-.rmain{flex:1;display:flex;flex-direction:column;justify-content:center;padding:var(--s-m) 0}
-.rphase{font-weight:var(--w-bold);color:var(--run-text-2);min-height:26px}
-.rname{margin:0;font-size:var(--t-xl);line-height:1.1;font-weight:var(--w-bold);font-stretch:78%;font-variation-settings:"wdth" 78;letter-spacing:-.01em}
-.clock{white-space:nowrap;overflow:hidden;font-size:min(44vw,236px);line-height:.86;font-weight:var(--w-display);letter-spacing:-.025em;margin-top:var(--s-s);font-stretch:62%;font-variation-settings:"wdth" 62;font-variant-numeric:tabular-nums}
-.clock small{font-size:.28em;font-weight:var(--w-bold);letter-spacing:0;margin-left:.15em}
-.clock.tick{animation:tick .5s ease-out}
-@keyframes tick{0%{transform:scale(1.04)}100%{transform:scale(1)}}
-.sbar{height:8px;background:rgba(18,20,23,.16);border-radius:4px;overflow:hidden;margin-top:var(--s-m)}
-.sbar i{display:block;height:100%;width:0;background:var(--run-text);border-radius:4px;transition:width .25s linear}
-.live{margin-top:var(--s-s);font-weight:var(--w-bold);min-height:26px;color:var(--run-text-2);font-variant-numeric:tabular-nums}
-.upnext{display:flex;align-items:center;gap:var(--s-s);min-height:56px;background:rgba(255,255,255,.4);border-radius:var(--r-m);padding:0 var(--s-s)}
-.upnext .lab{color:var(--run-text-2)}.upnext b{flex:1;font-weight:var(--w-bold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.upnext .v{font-weight:var(--w-bold)}
-.controls{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;margin-top:var(--s-m)}
-.ctl{display:flex;flex-direction:column;align-items:center;gap:var(--s-xs);font-size:var(--t-sm);font-weight:var(--w-bold);min-width:96px}
-.ctl .c{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--run-border);position:relative}
-.ctl:active .c{background:rgba(18,20,23,.12)}
-.ctl.gone{visibility:hidden}
-.main{width:88px;height:88px;border-radius:50%;background:var(--run-text);color:var(--phase);display:grid;place-items:center;transition:transform .12s}
-.main:active{transform:scale(.94)}
-.hold svg.ring{position:absolute;inset:-6px;width:72px;height:72px;transform:rotate(-90deg)}
-.hold svg.ring circle{fill:none;stroke:var(--run-text);stroke-width:4;stroke-dasharray:214;stroke-dashoffset:214;transition:stroke-dashoffset .15s}
-.hold.holding svg.ring circle{stroke-dashoffset:0;transition:stroke-dashoffset .9s linear}
-
-/* výběr tréninku */
-.chooser{margin:var(--s-xs) 0 0 calc(-1 * var(--s-xs))}
-.picklist{display:flex;flex-direction:column;gap:var(--s-xs);margin-top:var(--s-m);max-height:60vh;overflow:auto}
-.pick{display:flex;align-items:center;gap:var(--s-s);width:100%;min-height:72px;padding:var(--s-s);border-radius:var(--r-m);border:2px solid var(--border);text-align:left}
-.pick:active{background:var(--press)}
-.pick[aria-checked=true]{border-color:var(--text)}
-.pick .radio{flex:0 0 24px;width:24px;height:24px;border-radius:50%;border:2px solid var(--border-strong);display:grid;place-items:center}
-.pick[aria-checked=true] .radio{border-color:var(--text)}
-.pick[aria-checked=true] .radio::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--text)}
-.pick .pmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--s-2xs)}
-.pick .meta{font-size:var(--t-sm);color:var(--text-2)}
-.strip.mini{height:8px;gap:2px;margin-top:var(--s-2xs)}
-.strip.mini i{border-radius:2px;min-width:2px}
-
-/* hodnocení série */
-.scrim{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9;animation:fade .25s}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);color:var(--text);border-radius:var(--r-l) var(--r-l) 0 0;padding:var(--s-xs) var(--s-m) calc(env(safe-area-inset-bottom) + var(--s-s));animation:up .3s cubic-bezier(.2,.9,.3,1)}
-.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--border-strong);margin:0 auto var(--s-m)}
-.sheet .inner{max-width:512px;margin:0 auto}
-.sheet h2{margin:0;font-size:var(--t-lg);line-height:1.2;font-weight:var(--w-bold);font-stretch:80%;font-variation-settings:"wdth" 80}
-.sheet p{margin:var(--s-2xs) 0 0;color:var(--text-2)}
-.rpe{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--s-xs);margin:var(--s-m) 0 var(--s-xs)}
-.rpe button{height:56px;border-radius:var(--r-s);font-size:var(--t-md);font-weight:var(--w-bold);background:hsl(var(--h) 80% 86%);color:#121417}
-.rpe button:active{transform:scale(.94)}
-.rpe-scale{display:flex;justify-content:space-between;font-size:var(--t-sm);color:var(--text-2)}
-.sheet .btn-tertiary{margin:var(--s-xs) auto 0;display:block}
-@keyframes up{from{transform:translateY(100%)}to{transform:none}}
-@keyframes fade{from{opacity:0}}
-
-/* souhrn */
-.back{display:inline-flex;align-items:center;gap:var(--s-xs);min-height:48px;color:var(--text-2);font-weight:var(--w-bold);margin-left:calc(-1 * var(--s-xs));padding:0 var(--s-xs)}
-.dstats{display:flex;gap:var(--s-l);margin:var(--s-m) 0 0}
-.section{margin-top:var(--s-l)}
-.section h3{margin:0 0 var(--s-xs);font-size:var(--t-sm);font-weight:var(--w-bold);color:var(--text-2)}
-.insight{background:var(--surface);border-radius:var(--r-m);padding:var(--s-s);display:flex;gap:var(--s-s)}
-.insight::before{content:"";flex:0 0 4px;border-radius:2px;background:var(--accent,var(--m-recovery))}
-.card{background:var(--surface);border-radius:var(--r-m);padding:0 var(--s-s)}
-.grid{display:grid;align-items:stretch}
-.grid>div:not(.rl){padding-left:var(--s-xs)}
-.grid>div{display:flex;align-items:center;justify-content:flex-end;min-height:48px;border-top:1px solid var(--border);font-size:var(--t-md);font-weight:var(--w-bold);font-variant-numeric:tabular-nums;font-stretch:80%;font-variation-settings:"wdth" 80;white-space:nowrap}
-.grid>.hd{min-height:40px;border-top:0;font-size:var(--t-sm);color:var(--text-2)}
-.grid>.rl{justify-content:flex-start;font-size:var(--t-base)}
-.grid .mut{color:var(--text-2);font-weight:var(--w-regular)}
-.pill{display:inline-grid;place-items:center;min-width:32px;height:32px;padding:0 var(--s-xs);border-radius:var(--r-s);font-size:var(--t-base);background:hsl(var(--h) 80% 86%);color:#121417}
-.rows .r{display:flex;align-items:center;gap:var(--s-s);min-height:56px;border-top:1px solid var(--border)}
-.rows .r:first-child{border-top:0}
-.rows .r b{flex:1}.rows .r span{color:var(--text-2);font-size:var(--t-sm)}.rows .r em{font-style:normal;font-weight:var(--w-bold);text-align:right;min-width:80px}
-.note{font-size:var(--t-sm);color:var(--text-2);margin:var(--s-xs) 0 0}
-.del-wrap{margin-top:var(--s-l)}
-
-/* oznámení s možností vrátit */
-.toast{position:fixed;left:var(--s-s);right:var(--s-s);bottom:calc(env(safe-area-inset-bottom) + 104px);z-index:20;max-width:512px;margin:0 auto;display:flex;align-items:center;gap:var(--s-s);min-height:56px;padding:0 var(--s-xs) 0 var(--s-s);border-radius:var(--r-m);background:var(--text);color:var(--bg);animation:fade .2s}
-.toast span{flex:1}.toast button{min-height:48px;padding:0 var(--s-s);font-weight:var(--w-bold);text-decoration:underline;text-underline-offset:4px}
-
-@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
-@media (max-height:700px){.clock{font-size:min(40vw,190px)}.rname{font-size:var(--t-lg)}.rmain{padding:var(--s-xs) 0}.controls{margin-top:var(--s-s)}.upnext{min-height:48px}}
-</style>
+<link rel="stylesheet" href="styles.css">
+<title>TRImates</title>
 </head>
-<body data-state="loading">
+<body data-screen="home">
 
-<!-- PŘÍPRAVA -->
-<section class="screen" id="readyScreen" data-only="loading error ready">
- <div class="brand"><i></i>TRImates Run</div>
+<!-- HORNÍ LIŠTA -->
+<header class="appbar"><div class="appbar-inner">
+ <button class="iconbtn ghost" id="backBtn" aria-label="Zpět"><svg width="11" height="18" viewBox="0 0 11 18" aria-hidden="true"><path d="M9 2 2 9l7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+ <div class="appbar-title" id="appbarTitle"></div>
+ <button class="iconbtn" id="menuBtn" aria-label="Menu"><svg width="22" height="16" viewBox="0 0 22 16" aria-hidden="true"><path d="M1 1.5h20M1 8h20M1 14.5h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+</div></header>
+
+<!-- ROZCESTNÍK -->
+<section class="screen" data-screen="home">
+ <h1 class="h1">Co dnes?</h1>
+ <div class="tiles">
+  <button class="tile" data-sport="beh">
+   <span class="ico"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><circle cx="15" cy="4" r="2.2" fill="currentColor"/><path d="M8.5 21l2.5-5.5 3 2.5V22M6 11l3-3.5h4.5l2 3.5 3 1.5M11 7.5l-1.5 6.5 4.5 3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+   <span><b>Běh</b><span class="meta" id="metaBeh"></span></span>
+   <svg class="go" width="11" height="18" viewBox="0 0 11 18" aria-hidden="true"><path d="M2 2l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <button class="tile" data-sport="kolo">
+   <span class="ico"><svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="16" r="3.8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18.5" cy="16" r="3.8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.5 16l4-7.5h6.5L18.5 16M9.5 8.5 12 16h-6.5M15 5.5h2.5l-1.5 3M8 6h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+   <span><b>Kolo</b><span class="meta" id="metaKolo"></span></span>
+   <svg class="go" width="11" height="18" viewBox="0 0 11 18" aria-hidden="true"><path d="M2 2l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+ </div>
+ <p class="status" id="homeStatus"></p>
+</section>
+
+<!-- SEZNAM TRÉNINKŮ -->
+<section class="screen" data-screen="list">
+ <h1 class="h1" id="listTitle">Běh</h1>
+ <div id="listBody"></div>
+</section>
+
+<!-- DETAIL TRÉNINKU -->
+<section class="screen" data-screen="detail">
  <p class="kicker" id="rKicker">&nbsp;</p>
  <h1 id="rName">&nbsp;</h1>
- <button class="btn-tertiary chooser" id="chooseBtn" data-only="ready" hidden>Vybrat jiný trénink</button>
- <p class="loading-line" data-only="loading">Načítám trénink z GitHubu…</p>
- <div data-only="ready">
-  <div class="facts" id="rFacts"></div>
-  <div class="strip" id="rStrip" aria-hidden="true"></div>
-  <div class="legend"><span class="l1">Rozklus a výklus</span><span class="l2">Interval</span><span class="l3">Meziklus</span></div>
-  <div class="panels">
-   <details class="panel" id="planBox">
-    <summary>Průběh tréninku<span class="cnt" id="planCount"></span><svg width="9" height="14" viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5 7 7l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-    <ol class="plan" id="planList"></ol>
-   </details>
-   <details class="panel" id="histBox">
-    <summary>Historie<span class="cnt" id="histCount"></span><svg width="9" height="14" viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5 7 7l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-    <div class="hist" id="histList"></div>
-   </details>
-  </div>
-  <ul class="hints">
-   <li><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 5v5M9 12.6v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Při startu povol polohu, měří se z ní tempo úseků</span></li>
-   <li><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 5v5M9 12.6v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Displej nech zapnutý, po zamčení iPhone ztlumí hlas i GPS</span></li>
-  </ul>
+ <div class="seg" id="envSeg" role="group" aria-label="Kde jedeš">
+  <button data-env="out" aria-pressed="true">Venku</button>
+  <button data-env="in" aria-pressed="false">Na trenažéru</button>
  </div>
- <p class="err" data-only="error">Trénink se nepodařilo načíst. Zkontroluj připojení k internetu a že je v repozitáři soubor workout.json.</p>
- <div class="dock">
-  <button class="btn btn-primary" id="startBtn" data-only="ready"><svg width="18" height="20" viewBox="0 0 20 22" aria-hidden="true"><path d="M2 2.6v16.8a1.5 1.5 0 0 0 2.3 1.3l13.4-8.4a1.5 1.5 0 0 0 0-2.6L4.3 1.3A1.5 1.5 0 0 0 2 2.6Z" fill="currentColor"/></svg>Spustit trénink</button>
-  <button class="btn btn-primary" id="retryBtn" data-only="error">Načíst trénink znovu</button>
+ <div class="facts" id="rFacts"></div>
+ <div class="strip" id="rStrip" aria-hidden="true"></div>
+ <div class="legend" id="rLegend"></div>
+ <div class="panels">
+  <details class="panel" id="planBox">
+   <summary>Průběh tréninku<span class="cnt" id="planCount"></span><svg width="9" height="14" viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5 7 7l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+   <ol class="plan" id="planList"></ol>
+  </details>
  </div>
+ <ul class="hints" id="rHints"></ul>
+ <div class="dock"><button class="btn btn-primary" id="startBtn"><svg width="18" height="20" viewBox="0 0 20 22" aria-hidden="true"><path d="M2 2.6v16.8a1.5 1.5 0 0 0 2.3 1.3l13.4-8.4a1.5 1.5 0 0 0 0-2.6L4.3 1.3A1.5 1.5 0 0 0 2 2.6Z" fill="currentColor"/></svg>Spustit trénink</button></div>
 </section>
 
 <!-- BĚH -->
-<section class="screen run" id="runScreen" data-only="running paused">
+<section class="screen run" data-screen="run">
  <div class="rstrip" id="runStrip" aria-hidden="true"></div>
  <div class="rmeta"><span id="seriesLabel"></span><span class="tot num" id="totalLabel">0:00</span></div>
  <div class="rmain">
@@ -231,38 +83,115 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
  </div>
  <div class="upnext" id="upNext"><span class="lab">Další</span><b id="nextName"></b><span class="v num" id="nextVal"></span></div>
  <div class="controls">
-  <button class="ctl" id="nextBtn"><span class="c"><svg width="22" height="20" viewBox="0 0 22 20"><path d="M2 2.4v15.2a1.3 1.3 0 0 0 2 1.1l11-7.6a1.3 1.3 0 0 0 0-2.2L4 1.3a1.3 1.3 0 0 0-2 1.1Z" fill="currentColor"/><rect x="17" y="1" width="3.2" height="18" rx="1.4" fill="currentColor"/></svg></span><span id="nextLab">Další úsek</span></button>
+  <button class="ctl" id="nextBtn"><span class="c"><svg width="22" height="20" viewBox="0 0 22 20" aria-hidden="true"><path d="M2 2.4v15.2a1.3 1.3 0 0 0 2 1.1l11-7.6a1.3 1.3 0 0 0 0-2.2L4 1.3a1.3 1.3 0 0 0-2 1.1Z" fill="currentColor"/><rect x="17" y="1" width="3.2" height="18" rx="1.4" fill="currentColor"/></svg></span><span id="nextLab">Další úsek</span></button>
   <button class="main" id="pauseBtn" aria-label="Pauza">
-   <svg id="icPause" width="26" height="30" viewBox="0 0 26 30"><rect x="2" y="1" width="8" height="28" rx="2.5" fill="currentColor"/><rect x="16" y="1" width="8" height="28" rx="2.5" fill="currentColor"/></svg>
-   <svg id="icPlay" width="28" height="30" viewBox="0 0 20 22" style="display:none"><path d="M2 2.6v16.8a1.5 1.5 0 0 0 2.3 1.3l13.4-8.4a1.5 1.5 0 0 0 0-2.6L4.3 1.3A1.5 1.5 0 0 0 2 2.6Z" fill="currentColor"/></svg>
+   <svg id="icPause" width="26" height="30" viewBox="0 0 26 30" aria-hidden="true"><rect x="2" y="1" width="8" height="28" rx="2.5" fill="currentColor"/><rect x="16" y="1" width="8" height="28" rx="2.5" fill="currentColor"/></svg>
+   <svg id="icPlay" width="28" height="30" viewBox="0 0 20 22" style="display:none" aria-hidden="true"><path d="M2 2.6v16.8a1.5 1.5 0 0 0 2.3 1.3l13.4-8.4a1.5 1.5 0 0 0 0-2.6L4.3 1.3A1.5 1.5 0 0 0 2 2.6Z" fill="currentColor"/></svg>
   </button>
-  <button class="ctl hold" id="stopBtn"><span class="c"><svg class="ring" viewBox="0 0 68 68"><circle cx="34" cy="34" r="32"/></svg><svg width="18" height="18" viewBox="0 0 18 18"><rect width="18" height="18" rx="3.5" fill="currentColor"/></svg></span><span id="stopLab">Podrž pro konec</span></button>
+  <button class="ctl hold" id="stopBtn"><span class="c"><svg class="ring" viewBox="0 0 68 68" aria-hidden="true"><circle cx="34" cy="34" r="32"/></svg><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect width="18" height="18" rx="3.5" fill="currentColor"/></svg></span><span id="stopLab">Podrž pro konec</span></button>
  </div>
 </section>
 
 <!-- SOUHRN -->
-<section class="screen" id="doneScreen" data-only="done">
- <button class="back" id="backBtn" hidden><svg width="9" height="14" viewBox="0 0 9 14"><path d="M7.5 1.5 2 7l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Zpět</button>
- <p class="kicker" id="dKicker"></p>
+<section class="screen" data-screen="summary">
+ <p class="kicker" id="dKicker" style="margin-top:var(--s-xs)"></p>
  <h1 id="dTitle">Hotovo</h1>
  <div class="dstats" id="dStats"></div>
+ <p class="sync" id="dSync"></p>
  <div class="section" id="insightSec" hidden><div class="insight" id="insight"></div></div>
- <div class="section" id="seriesTbl" hidden><h3>Tempo v sériích, min/km</h3><div class="card"><div class="grid" id="seriesGrid"></div></div><p class="note" id="dNote" hidden></p></div>
+ <div class="section" id="seriesTbl" hidden><h3 id="seriesTitle">Tempo v sériích</h3><div class="card"><div class="grid" id="seriesGrid"></div></div><p class="note" id="dNote" hidden></p></div>
  <div class="section" id="otherSec" hidden><h3 id="otherTitle">Rozklus a výklus</h3><div class="card rows" id="otherRows"></div></div>
  <div class="del-wrap"><button class="btn-tertiary danger" id="deleteBtn" hidden>Smazat z historie</button></div>
- <div class="dock"><button class="btn btn-primary" id="closeBtn">Zpět na přehled</button></div>
+ <div class="dock"><button class="btn btn-primary" id="closeBtn">Hotovo</button></div>
 </section>
 
-<div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button id="toastUndo">Vrátit</button></div>
+<!-- HISTORIE -->
+<section class="screen" data-screen="history">
+ <h1 class="h1">Historie</h1>
+ <div class="seg" id="histFilter" role="group" aria-label="Filtr sportu">
+  <button data-f="all" aria-pressed="true">Vše</button><button data-f="beh" aria-pressed="false">Běh</button><button data-f="kolo" aria-pressed="false">Kolo</button>
+ </div>
+ <p class="sync" id="histSync"></p>
+ <div id="histBody"></div>
+</section>
 
-<!-- VÝBĚR TRÉNINKU -->
-<div class="scrim" id="pickScrim" hidden></div>
-<div class="sheet" id="pickSheet" hidden role="dialog" aria-labelledby="pickTitle">
+<!-- SPRÁVA TRÉNINKŮ -->
+<section class="screen" data-screen="manage">
+ <h1 class="h1">Tréninky</h1>
+ <div class="empty" id="manageNoToken" hidden>
+  <p>Přidávání a mazání tréninků potřebuje připojení ke GitHubu</p>
+  <button class="btn btn-secondary" id="goSettingsBtn">Připojit GitHub</button>
+ </div>
+ <div class="seg" id="manageSport" role="group" aria-label="Sport">
+  <button data-s="beh" aria-pressed="true">Běh</button><button data-s="kolo" aria-pressed="false">Kolo</button>
+ </div>
+ <div class="actions" id="manageActions">
+  <button class="btn btn-secondary" id="importBtn">Nahrát soubor z Garminu</button>
+  <input type="file" id="importFile" accept=".json,application/json" hidden>
+ </div>
+ <div id="manageBody"></div>
+ <div class="dock" id="manageDock"><button class="btn btn-primary" id="newBtn">Vytvořit trénink</button></div>
+</section>
+
+<!-- EDITOR TRÉNINKU -->
+<section class="screen" data-screen="editor">
+ <h1 class="h1" id="edTitle">Nový trénink</h1>
+ <div id="edBody"></div>
+ <div class="dock"><button class="btn btn-primary" id="saveBtn">Uložit trénink</button></div>
+</section>
+
+<!-- NASTAVENÍ -->
+<section class="screen" data-screen="settings">
+ <h1 class="h1">Nastavení</h1>
+ <div class="section">
+  <h3>Zvuk</h3>
+  <div class="card">
+   <label class="setrow"><span>Hlasové pokyny<span class="sub">Název úseku při každé změně</span></span><input type="checkbox" id="setVoice"></label>
+   <label class="setrow"><span>Upozornění 10 s předem<span class="sub">Hlasem oznámí, co přijde</span></span><input type="checkbox" id="setCountdown"></label>
+   <label class="setrow"><span>Pípání 3‑2‑1<span class="sub">Před koncem každého úseku</span></span><input type="checkbox" id="setBeep"></label>
+  </div>
+ </div>
+ <div class="section">
+  <h3>GitHub</h3>
+  <div class="box" style="margin-top:0">
+   <p id="ghStatus" style="margin:0"></p>
+   <div class="field">
+    <label for="ghToken">Přístupový token</label>
+    <input class="input" id="ghToken" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…">
+    <p class="error" id="ghError" hidden></p>
+   </div>
+   <div class="actions">
+    <button class="btn btn-secondary" id="ghSave">Uložit a ověřit</button>
+    <button class="btn-tertiary danger" id="ghRemove" hidden>Odpojit GitHub</button>
+   </div>
+   <details style="margin-top:var(--s-s)">
+    <summary style="padding:0;min-height:48px">Jak získat token</summary>
+    <ol class="steps">
+     <li>Otevři <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a></li>
+     <li>Token name: TRImates, Expiration: 1 rok</li>
+     <li>Repository access: Only select repositories → running-app</li>
+     <li>Permissions → Repository permissions → Contents: Read and write</li>
+     <li>Generate token, zkopíruj ho a vlož sem</li>
+    </ol>
+   </details>
+  </div>
+ </div>
+ <p class="help" style="margin-top:var(--s-l)">Výsledky se ukládají do souboru vysledky/historie.json ve veřejném repozitáři. Poloha ani trasa se neukládají.</p>
+</section>
+
+<!-- MENU -->
+<div class="scrim" id="menuScrim" hidden></div>
+<div class="sheet" id="menuSheet" hidden role="dialog" aria-label="Menu">
  <div class="inner">
   <div class="grab"></div>
-  <h2 id="pickTitle">Vyber trénink</h2>
-  <div class="picklist" id="pickList" role="radiogroup" aria-labelledby="pickTitle"></div>
-  <button class="btn-tertiary" id="pickClose">Zavřít</button>
+  <nav class="mlist">
+   <button class="mrow" data-go="list:beh"><span class="mi" style="background:var(--c-interval);color:#121417"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="15" cy="4" r="2.2" fill="currentColor"/><path d="M8.5 21l2.5-5.5 3 2.5V22M6 11l3-3.5h4.5l2 3.5 3 1.5M11 7.5l-1.5 6.5 4.5 3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Běh<span class="chev">›</span></button>
+   <button class="mrow" data-go="list:kolo"><span class="mi" style="background:var(--c-warmup);color:#121417"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="16" r="3.8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18.5" cy="16" r="3.8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.5 16l4-7.5h6.5L18.5 16M9.5 8.5 12 16h-6.5M15 5.5h2.5l-1.5 3M8 6h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Kolo<span class="chev">›</span></button>
+   <div class="mdiv"></div>
+   <button class="mrow" data-go="history"><span class="mi">◷</span>Historie<span class="chev">›</span></button>
+   <button class="mrow" data-go="manage"><span class="mi">＋</span>Tréninky<span class="chev">›</span></button>
+   <button class="mrow" data-go="settings"><span class="mi">⚙︎</span>Nastavení<span class="chev">›</span></button>
+  </nav>
  </div>
 </div>
 
@@ -272,500 +201,15 @@ html:has(body[data-state=running]),html:has(body[data-state=paused]){background:
  <div class="inner">
   <div class="grab"></div>
   <h2 id="rpeTitle">Jak těžká byla série?</h2>
-  <p>Ťukni na číslo a běž dál</p>
+  <p>Ťukni na číslo a pokračuj</p>
   <div class="rpe" id="rpeGrid"></div>
   <div class="rpe-scale"><span>lehké</span><span>na hraně</span></div>
   <button class="btn-tertiary" id="rpeSkip">Přeskočit hodnocení</button>
  </div>
 </div>
 
-<script>
-const $=id=>document.getElementById(id);
-const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const PHASE_NAME={warmup:"Rozklus",interval:"Interval",recovery:"Meziklus",cooldown:"Výklus",paused:"Pozastaveno"};
-const PHASE_COLOR={warmup:"#8DBFFF",interval:"#FF6B2C",recovery:"#5FD896",cooldown:"#8DBFFF",paused:"#C8CCD1"};
-const rpeHue=n=>Math.round(140-(n-1)*(130/9));
+<div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button id="toastUndo">Vrátit</button></div>
 
-// ---------- formátování ----------
-const fmt=s=>{s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
-const kmNum=m=>(m/1000).toFixed(m%1000===0?0:m>=10000?1:2).replace(".",",");
-const km=m=>kmNum(m)+" km";
-const paceSec=(sec,m)=>m>=50?sec/(m/1000):null;
-const paceTxt=(sec,m)=>{const p=paceSec(sec,m);return p?fmt(p):"—"};
-const stepText=s=>s.kind==="distance"?km(s.meters):s.kind==="open"?"volně":fmt(s.seconds);
-const durLabel=sec=>sec%60===0?sec/60+" min":fmt(sec);
-const dShort=t=>new Date(t).toLocaleDateString("cs-CZ",{day:"numeric",month:"numeric"});
-const dLong=t=>new Date(t).toLocaleDateString("cs-CZ",{weekday:"long",day:"numeric",month:"long"});
-const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const isWalk=s=>/chůz|chuz|walk/i.test(s.name);
-const estSec=s=>s.kind==="time"?s.seconds:s.kind==="open"?(s.type==="cooldown"?300:360):s.meters*(isWalk(s)?.66:.36);
-
-// ---------- stav aplikace ----------
-let state="loading";
-function setState(s){
- state=s;document.body.dataset.state=s;
- document.querySelectorAll("[data-only]").forEach(el=>{el.hidden=!el.dataset.only.split(" ").includes(s)});
- if(s==="ready"){$("histBox").hidden=!hist.length;$("chooseBtn").hidden=library.length<2;$("chooseBtn").textContent=`Vybrat jiný trénink (${library.length})`}
- if(s!=="running"&&s!=="paused"){document.body.dataset.phase="";setTheme(null)}
- render();
-}
-function setTheme(c){$("themeColor").content=c||getComputedStyle(document.body).backgroundColor||"#F3F4F2"}
-
-// ---------- trénink z GitHubu ----------
-let workout=[],workoutName="",workoutDate="",seriesCount=0;
-function parseJson(obj){
- const out=[],fb={warmup:"Rozklus",interval:"Interval",recovery:"Meziklus",cooldown:"Výklus"};let maxS=0;
- function mk(s,series){
-  const key=s.stepType?.stepTypeKey||"",cond=s.endCondition?.conditionTypeKey||"";
-  const type=["warmup","interval","recovery","cooldown"].includes(key)?key:(key==="rest"?"recovery":"interval");
-  const raw=(s.description||"").trim(),v=Number(s.endConditionValue)||0;
-  let name=raw?raw[0].toUpperCase()+raw.slice(1):fb[type];
-  if(cond==="time"){if(!raw&&type==="interval")name="Interval "+durLabel(v);return{name,type,series,kind:"time",seconds:v}}
-  if(cond==="distance")return{name,type,series,kind:"distance",meters:v||1000};
-  // „do stisku tlačítka“: hodnota od 500 m ber jako vzdálenost, jinak úsek ukončíš sám
-  if(cond==="lap.button")return v>=500?{name,type,series,kind:"distance",meters:v}:{name,type,series,kind:"open"};
-  return null;
- }
- function visit(steps,series){
-  (steps||[]).forEach(s=>{
-   if(s.type==="RepeatGroupDTO"||s.stepType?.stepTypeKey==="repeat"){
-    const reps=Math.max(1,Number(s.numberOfIterations||s.endConditionValue||1));maxS=Math.max(maxS,reps);
-    for(let r=0;r<reps;r++){
-     const before=out.length;visit(s.workoutSteps,series||r+1);
-     if(r===reps-1&&s.skipLastRestStep&&out.length>before&&out[out.length-1].type==="recovery")out.pop();
-    }
-    return;
-   }
-   const st=mk(s,series);if(st&&(st.kind!=="time"||st.seconds>0))out.push(st);
-  });
- }
- (obj.workoutSegments||[]).forEach(seg=>visit(seg.workoutSteps,0));
- if(!out.length)throw new Error("v JSONu nejsou kroky tréninku");
- if(!maxS)maxS=inferSeries(out);
- const lastInt={};out.forEach((s,i)=>{if(s.series&&s.type==="interval")lastInt[s.series]=i});
- Object.values(lastInt).forEach(i=>out[i].seriesEnd=true);
- return{name:obj.workoutName||"Trénink",steps:out,seriesCount:maxS};
-}
-// Trénink zapsaný bez opakování (např. 2× 8-4-2-1): série se poznají podle opakujícího se vzoru intervalů
-function inferSeries(out){
- const ints=out.map((s,i)=>s.type==="interval"&&s.kind==="time"?i:-1).filter(i=>i>=0);
- const d=ints.map(i=>out[i].seconds);
- for(let p=2;p<=d.length/2;p++){
-  if(d.length%p||!d.every((x,k)=>x===d[k%p]))continue;
-  const reps=d.length/p;
-  for(let r=0;r<reps;r++){
-   const from=ints[r*p],to=r<reps-1?ints[(r+1)*p]-1:ints[ints.length-1];
-   for(let i=from;i<=to;i++)out[i].series=r+1;
-  }
-  return reps;
- }
- return 0;
-}
-function splitName(name){
- const m=name.match(/^(.*?)\s+(\d{1,2}\.\s?\d{1,2}\.\s?\d{4})$/);
- return{title:m?m[1]:name,date:m?m[2].replace(/\s/g,""):""};
-}
-function applyWorkout(w){
- workout=w.steps;seriesCount=w.seriesCount||0;
- const n=splitName(w.name);workoutName=n.title;workoutDate=n.date;
- buildReady();
-}
-const REPO="Radostslav/running-app",DIR="treninky";
-let library=store.get("library",[]),selected=store.get("selectedWorkout",null),lastLoad=0;
-async function fetchLibrary(){
- const t=Date.now();
- const r=await fetch(`https://api.github.com/repos/${REPO}/contents/${DIR}`,{cache:"no-store"});
- if(r.status===404)return null; // složka zatím neexistuje
- if(!r.ok)throw new Error("GitHub API "+r.status);
- const files=(await r.json()).filter(f=>f.type==="file"&&/\.json$/i.test(f.name));
- const list=await Promise.all(files.map(async f=>{
-  try{const x=await fetch(f.download_url+"?t="+t,{cache:"no-store"});if(!x.ok)return null;return{file:f.name,...parseJson(await x.json())}}
-  catch(e){return null}
- }));
- return list.filter(Boolean);
-}
-async function loadWorkout(){
- if(active())return;
- if(Date.now()-lastLoad<20000&&library.length){if(!workout.length)selectWorkout(selected);setState("ready");return}
- if(!workout.length)setState("loading");
- let lib=null;
- try{lib=await fetchLibrary()}catch(e){lib=library.length?library:null}
- if(!lib||!lib.length){
-  // záloha: jeden soubor workout.json v kořeni repozitáře
-  try{const x=await fetch("workout.json?t="+Date.now(),{cache:"no-store"});if(x.ok)lib=[{file:"workout.json",...parseJson(await x.json())}]}catch(e){}
- }
- if(lib&&lib.length){lib.sort((a,b)=>a.name.localeCompare(b.name,"cs"));library=lib;store.set("library",lib);lastLoad=Date.now()}
- if(!library.length){const c=store.get("lastWorkout",null);if(c)library=[{file:"workout.json",...c}]}
- if(!library.length){setState("error");return}
- if(active())return;
- selectWorkout(selected);
- if(state==="loading"||state==="error"||state==="ready")setState("ready");
-}
-function selectWorkout(file){
- const w=library.find(x=>x.file===file)||library[0];
- selected=w.file;store.set("selectedWorkout",selected);applyWorkout(w);
-}
-
-// ---------- obrazovka přípravy ----------
-function buildStrip(el,steps=workout){
- el.innerHTML="";
- steps.forEach(s=>{const i=document.createElement("i");i.dataset.type=s.type;i.style.flexGrow=estSec(s);el.appendChild(i)});
-}
-function buildReady(){
- $("rKicker").textContent=workoutDate?"Trénink na "+workoutDate.replace(/^(\d+)\.(\d+)\.\d+$/,"$1. $2."):"Dnešní trénink";
- $("rName").textContent=workoutName;
- const total=workout.reduce((a,s)=>a+estSec(s),0);
- const dist=workout.reduce((a,s)=>a+(s.kind==="distance"?s.meters:0),0);
- const f=[["≈ "+Math.round(total/60),"minut"]];
- if(seriesCount)f.push([seriesCount,seriesCount<5?"série":"sérií"]);
- if(dist){
-  const t=new Set(workout.filter(s=>s.kind==="distance").map(s=>s.type));
-  f.push([kmNum(dist),t.has("warmup")&&t.has("cooldown")?"km rozklus a výklus":t.has("warmup")?"km rozklus":t.has("cooldown")?"km výklus":"km na vzdálenost"]);
- }
- $("rFacts").innerHTML=f.map(([a,b])=>`<div class="fact"><b class="num">${esc(a)}</b><span>${esc(b)}</span></div>`).join("");
- buildStrip($("rStrip"));buildStrip($("runStrip"));
- const pl=$("planList");pl.innerHTML="";let lastS=-1;
- workout.forEach(s=>{
-  if(s.series&&s.series!==lastS){const h=document.createElement("li");h.className="sh";h.textContent=s.series+". série";pl.appendChild(h)}
-  if(!s.series&&lastS>0){const h=document.createElement("li");h.className="sh";h.textContent="Závěr";pl.appendChild(h)}
-  lastS=s.series||0;
-  const li=document.createElement("li");li.dataset.type=s.type;
-  li.innerHTML=`<span>${esc(s.name)}</span><span class="v num">${esc(stepText(s))}</span>`;pl.appendChild(li);
- });
- $("planCount").textContent=workout.length+" kroků";
-}
-
-// ---------- zvuk, hlas, displej ----------
-function say(t){
- if(!("speechSynthesis"in window))return;speechSynthesis.cancel();
- const u=new SpeechSynthesisUtterance(t);u.lang="cs-CZ";u.rate=.93;
- const v=speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith("cs"));if(v)u.voice=v;
- speechSynthesis.speak(u);
-}
-let actx=null;
-function unlockAudio(){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();if(actx.state==="suspended")actx.resume()}catch(e){}}
-function beep(f=880,d=.12,v=.3){
- if(!actx)return;const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
- o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);
- o.connect(g).connect(actx.destination);o.start(t);o.stop(t+d+.03);
-}
-let wakeLock=null;
-async function getWakeLock(){try{if("wakeLock"in navigator&&!wakeLock){wakeLock=await navigator.wakeLock.request("screen");wakeLock.addEventListener("release",()=>{wakeLock=null})}}catch(e){}}
-function releaseWakeLock(){if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}}
-
-// ---------- průběh tréninku ----------
-// Čas se počítá z reálných hodin, takže po uspání stránky se dorovná.
-let idx=0,ticker=null,stepEndsAt=0,pausedRemaining=0,elapsedMs=0,resumedAt=0,stepStartElapsed=0;
-let flags={},results=[],rpe={},pendingRpe=null,run=null,skippedNote="";
-let gpsWatch=null,gpsState="",lastPt=null,stepDist=0,stepFixes=0,stepMaxGap=0,lastFixT=0;
-const cur=()=>workout[idx];
-const active=()=>state==="running"||state==="paused";
-const elapsedNow=()=>elapsedMs+(state==="running"?Date.now()-resumedAt:0);
-function remainingMs(){
- const s=cur();if(!s||s.kind!=="time")return 0;
- if(state==="paused")return pausedRemaining;
- return Math.max(0,stepEndsAt-Date.now());
-}
-function enterStep(i,startAt){
- idx=i;flags={beeped:{}};
- stepStartElapsed=elapsedNow()-(Date.now()-startAt);
- stepDist=0;stepFixes=0;stepMaxGap=0;lastFixT=startAt;
- const s=cur();if(s.kind==="time")stepEndsAt=startAt+s.seconds*1000;
- if(s.type==="interval")hideRpe();
- const c=$("clock");c.classList.remove("tick");void c.offsetWidth;c.classList.add("tick");
-}
-function leaveStep(natural,endT){
- const s=cur();
- const sec=natural&&s.kind==="time"?s.seconds:(elapsedNow()-(Date.now()-endT)-stepStartElapsed)/1000;
- const gapEnd=Math.max(stepMaxGap,endT-lastFixT);
- results.push({name:s.name,type:s.type,series:s.series||0,plan:s.kind==="time"?s.seconds:null,sec:Math.round(sec),m:Math.round(stepDist),ok:stepFixes>=3&&gapEnd<=15000});
- if(s.seriesEnd)pendingRpe=s.series;
-}
-function goNext(endT,natural){
- leaveStep(natural,endT);
- if(idx>=workout.length-1){finishWorkout(false);return false}
- enterStep(idx+1,endT);return true;
-}
-function spoken(s){
- return s.name+(s.kind==="distance"?". "+km(s.meters):s.kind==="open"?". Až budeš hotový, ťukni na Úsek hotový":"");
-}
-function announceStep(){
- const s=cur();
- if(navigator.vibrate)navigator.vibrate([180,100,180]);
- beep(1320,.4);
- say(spoken(s)+(pendingRpe?". Ohodnoť sérii.":"."));
- if(pendingRpe){showRpe(pendingRpe);pendingRpe=null}
-}
-function startWorkout(){
- if(!workout.length||state!=="ready")return;
- unlockAudio();
- results=[];rpe={};pendingRpe=null;elapsedMs=0;idx=0;skippedNote="";resumedAt=Date.now();
- state="running";enterStep(0,resumedAt);setState("running");
- getWakeLock();startGps();
- say("Trénink začíná. "+spoken(cur())+".");
- ticker=setInterval(tick,200);
-}
-function tick(){
- if(state!=="running")return;
- const now=Date.now();let s=cur(),skipped=0;
- while(s.kind==="time"&&now>=stepEndsAt){if(!goNext(stepEndsAt,true))return;skipped++;s=cur()}
- if(skipped){announceStep();skippedNote=skipped>1?"Na pozadí uběhlo "+skipped+" úseků":""}
- if(s.kind==="time"){
-  const rem=(stepEndsAt-now)/1000;
-  if(!flags.said10&&s.seconds>15&&rem<=10.3&&rem>8){flags.said10=true;say("Za deset sekund "+(workout[idx+1]?workout[idx+1].name:"konec tréninku"))}
-  for(const n of[3,2,1])if(!flags.beeped[n]&&rem<=n&&rem>n-.6){flags.beeped[n]=true;beep(880,.12)}
- }
- render();
-}
-function pause(){
- pausedRemaining=remainingMs();elapsedMs=elapsedNow();
- clearInterval(ticker);ticker=null;stopGps();releaseWakeLock();
- if("speechSynthesis"in window)speechSynthesis.cancel();
- setState("paused");
-}
-function resume(){
- unlockAudio();resumedAt=Date.now();
- if(cur().kind==="time")stepEndsAt=resumedAt+pausedRemaining;
- lastFixT=Date.now();setState("running");startGps();getWakeLock();say("Pokračujeme. "+cur().name);
- ticker=setInterval(tick,200);
-}
-function nextManual(){if(state==="running"&&goNext(Date.now(),false)){announceStep();render()}}
-function stopWorkout(){
- if(state==="running")elapsedMs=elapsedNow();
- state="paused";
- if(results.length||elapsedMs>20000){leaveStep(false,Date.now());finishWorkout(true)}
- else{clearInterval(ticker);ticker=null;stopGps();releaseWakeLock();hideRpe();if("speechSynthesis"in window)speechSynthesis.cancel();setState("ready")}
-}
-function finishWorkout(partial){
- if(state==="running")elapsedMs=elapsedNow();
- clearInterval(ticker);ticker=null;stopGps();releaseWakeLock();
- if(!partial){beep(1320,.2);setTimeout(()=>beep(1760,.4),250);say("Trénink dokončen. Skvělá práce!")}
- else if("speechSynthesis"in window)speechSynthesis.cancel();
- run={id:Date.now(),date:Date.now(),name:workoutName,total:Math.round(elapsedMs/1000),
-  dist:results.reduce((a,r)=>a+(r.ok?r.m:0),0),partial,results,rpe};
- hist.unshift(run);hist=hist.slice(0,50);store.set("history",hist);
- if(pendingRpe){showRpe(pendingRpe);pendingRpe=null}
- renderHistory();openSummary(run,false);
-}
-
-// ---------- GPS ----------
-function hav(a,b){const R=6371000,r=Math.PI/180,dA=(b.la-a.la)*r,dO=(b.lo-a.lo)*r;const h=Math.sin(dA/2)**2+Math.cos(a.la*r)*Math.cos(b.la*r)*Math.sin(dO/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
-function startGps(){
- if(!("geolocation"in navigator)){gpsState="none";return}
- stopGps();lastPt=null;if(gpsState!=="denied")gpsState="wait";
- gpsWatch=navigator.geolocation.watchPosition(onPos,onGpsErr,{enableHighAccuracy:true,maximumAge:0,timeout:30000});
-}
-function stopGps(){if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}}
-function onPos(p){
- if(state!=="running")return;
- const{latitude:la,longitude:lo,accuracy:acc}=p.coords,pt={la,lo,t:Date.now()};
- stepMaxGap=Math.max(stepMaxGap,pt.t-lastFixT);lastFixT=pt.t;stepFixes++;
- if(acc>35){gpsState="weak";return}
- gpsState="ok";
- if(lastPt){
-  const d=hav(lastPt,pt),dt=(pt.t-lastPt.t)/1000;
-  if(d<Math.max(4,acc*.3))return;
-  if(dt>0&&d/dt>12){lastPt=pt;return}
-  stepDist+=d;
- }
- lastPt=pt;
- const s=cur();
- if(s.kind==="distance"&&stepDist>=s.meters){if(goNext(Date.now(),true))announceStep()}
- render();
-}
-function onGpsErr(e){gpsState=e.code===1?"denied":"weak";render()}
-
-// ---------- vykreslení běhu ----------
-let lastPhase="";
-function render(){
- if(!active()||!workout.length)return;
- const s=cur(),phase=state==="paused"?"paused":s.type;
- if(phase!==lastPhase){document.body.dataset.phase=phase;setTheme(PHASE_COLOR[phase]);lastPhase=phase}
- $("phaseLabel").textContent=PHASE_NAME[phase]===s.name?"\u00a0":PHASE_NAME[phase];
- $("stepName").textContent=s.name;
- $("seriesLabel").textContent=s.series?`Série ${s.series} z ${seriesCount}`:(idx===0?"Začátek":"Závěr");
- $("totalLabel").textContent=fmt(elapsedNow()/1000);
- let prog=0;const c=$("clock");
- if(s.kind==="time"){const r=remainingMs();c.textContent=fmt(Math.ceil(r/1000));prog=1-r/(s.seconds*1000);fitClock()}
- else if(s.kind==="open"){c.textContent=fmt((elapsedNow()-stepStartElapsed)/1000);prog=0}
- else{const live=stepDist>0||gpsState==="ok";c.innerHTML=esc(live?(stepDist/1000).toFixed(2).replace(".",","):kmNum(s.meters))+"<small>km</small>";prog=stepDist/s.meters}
- fitClock();
- prog=Math.min(1,Math.max(0,prog));
- $("stepBar").style.width=prog*100+"%";
- [...$("runStrip").children].forEach((el,i)=>{el.classList.toggle("done",i<idx);el.classList.toggle("cur",i===idx);if(i===idx)el.style.setProperty("--p",prog*100+"%")});
- const stepSec=(elapsedNow()-stepStartElapsed)/1000;
- let live="";
- if(gpsState==="denied")live=s.kind!=="time"?"Bez polohy – úsek ukonči tlačítkem":"Bez polohy – tempo se neměří";
- else if(gpsState==="wait")live="Hledám GPS…";
- else if(gpsState==="weak"&&stepDist<80)live="Slabý GPS signál";
- else if(stepDist>=80&&stepSec>8)live=`${paceTxt(stepSec,stepDist)} /km · ${Math.round(stepDist)} m`;
- if(skippedNote)live=skippedNote;
- if(state==="paused")live="Ťukni na ▶ a pokračuj";
- $("live").textContent=live;
- const n=workout[idx+1];
- $("nextName").textContent=n?n.name:"Cíl";
- $("nextVal").textContent=n?stepText(n):"";
- $("upNext").querySelector(".lab").textContent=n?"Další":"Potom";
- $("icPause").style.display=state==="paused"?"none":"";$("icPlay").style.display=state==="paused"?"":"none";
- $("pauseBtn").setAttribute("aria-label",state==="paused"?"Pokračovat":"Pauza");
- $("nextBtn").classList.toggle("gone",state==="paused");
- $("nextLab").textContent=s.kind!=="time"?"Úsek hotový":"Další úsek";
- $("stepBar").parentElement.style.visibility=s.kind==="open"?"hidden":"";
-}
-
-// velké číslo se vždy vejde na šířku displeje
-let fitKey="";
-function fitClock(force){
- const c=$("clock"),key=c.textContent.length+"|"+c.innerHTML.includes("small")+"|"+innerWidth;
- if(key===fitKey&&!force)return;fitKey=key;
- c.style.fontSize="";const max=c.clientWidth,w=c.scrollWidth;
- if(w>max)c.style.fontSize=parseFloat(getComputedStyle(c).fontSize)*max/w*.97+"px";
-}
-addEventListener("resize",()=>fitClock(true));
-document.fonts&&document.fonts.ready.then(()=>fitClock(true));
-
-// ---------- hodnocení série ----------
-let rpeFor=null;
-function showRpe(series){rpeFor=series;$("rpeTitle").textContent=`Jak těžká byla ${series}. série?`;$("rpeSheet").hidden=false;$("rpeScrim").hidden=false}
-function hideRpe(){$("rpeSheet").hidden=true;$("rpeScrim").hidden=true;rpeFor=null}
-for(let n=1;n<=10;n++){
- const b=document.createElement("button");b.textContent=n;b.style.setProperty("--h",rpeHue(n));
- b.addEventListener("click",()=>{
-  if(rpeFor!=null){rpe[rpeFor]=n;if(state==="done"&&run){run.rpe=rpe;store.set("history",hist);openSummary(run,viewingHistory)}}
-  hideRpe();
- });
- $("rpeGrid").appendChild(b);
-}
-$("rpeSkip").addEventListener("click",hideRpe);
-$("chooseBtn").addEventListener("click",openPicker);
-$("pickClose").addEventListener("click",closePicker);
-$("pickScrim").addEventListener("click",closePicker);
-$("rpeScrim").addEventListener("click",hideRpe);
-
-// ---------- souhrn ----------
-let hist=store.get("history",[]),viewingHistory=false;
-function openSummary(r,fromHistory){
- run=r;viewingHistory=fromHistory;
- $("backBtn").hidden=!fromHistory;$("deleteBtn").hidden=!fromHistory;
- $("dKicker").textContent=dLong(r.date).replace(/^./,c=>c.toUpperCase());
- $("dTitle").textContent=fromHistory?r.name:(r.partial?"Trénink ukončen":"Hotovo");
- const st=[[fmt(r.total),"celkový čas"]];
- if(r.dist)st.push([kmNum(r.dist),"km"]);
- const ser=[...new Set(r.results.filter(x=>x.series).map(x=>x.series))];
- if(ser.length)st.push([ser.length,"série"]);
- $("dStats").innerHTML=st.map(([a,b])=>`<div class="fact"><b class="num">${esc(a)}</b><span>${esc(b)}</span></div>`).join("");
-
- // tabulka sérií: řádek = série, sloupec = úsek v tempu
- const bySer={};r.results.forEach(x=>{if(x.series&&x.type==="interval")(bySer[x.series]=bySer[x.series]||[]).push(x)});
- const keys=Object.keys(bySer).map(Number).sort((a,b)=>a-b);
- const cols=keys.length?Math.max(...keys.map(k=>bySer[k].length)):0;
- const hasRpe=keys.some(k=>r.rpe&&r.rpe[k]);
- if(keys.length){
-  const ref=bySer[keys[0]];
-  const g=$("seriesGrid");g.style.gridTemplateColumns=`auto repeat(${cols},minmax(0,1fr))${hasRpe?" auto":""}`;
-  let h='<div class="hd rl">Série</div>';
-  for(let c=0;c<cols;c++){const x=ref[c]||bySer[keys.find(k=>bySer[k][c])][c];h+=`<div class="hd">${esc(x.plan?durLabel(x.plan):x.name)}</div>`}
-  if(hasRpe)h+='<div class="hd">Pocit</div>';
-  keys.forEach(k=>{
-   h+=`<div class="rl">${k}.</div>`;
-   for(let c=0;c<cols;c++){const x=bySer[k][c];h+=x&&x.ok&&paceSec(x.sec,x.m)?`<div class="num">${paceTxt(x.sec,x.m)}</div>`:'<div class="num mut">—</div>'}
-   if(hasRpe){const v=r.rpe[k];h+=v?`<div><span class="pill num" style="--h:${rpeHue(v)}">${v}</span></div>`:'<div class="mut">—</div>'}
-  });
-  g.innerHTML=h;$("seriesTbl").hidden=false;
- }else $("seriesTbl").hidden=true;
-
- // rozklus, výklus a ostatní úseky mimo série
- const other=r.results.filter(x=>!x.series&&x.type!=="recovery");
- $("otherRows").innerHTML=other.map(x=>`<div class="r"><b>${esc(x.name)}</b><span class="num">${fmt(x.sec)}${x.ok&&x.m?" · "+km(x.m):""}</span><em class="num">${x.ok&&paceSec(x.sec,x.m)?paceTxt(x.sec,x.m)+" /km":"—"}</em></div>`).join("");
- $("otherSec").hidden=!other.length;
- $("otherTitle").textContent=other.every(x=>x.type==="warmup"||x.type==="cooldown")?"Rozklus a výklus":"Úseky";
-
- // trenérský postřeh: první vs. poslední série
- const ins=$("insight");$("insightSec").hidden=true;
- if(keys.length>=2){
-  const a=bySer[keys[0]],b=bySer[keys[keys.length-1]];let sa=0,sb=0,n=0;
-  for(let c=0;c<Math.min(a.length,b.length);c++){const pa=a[c].ok&&paceSec(a[c].sec,a[c].m),pb=b[c].ok&&paceSec(b[c].sec,b[c].m);if(pa&&pb){sa+=pa;sb+=pb;n++}}
-  if(n){
-   const d=Math.round((sb-sa)/n);let t,col;
-   if(Math.abs(d)<=3){t="Poslední série byla stejně rychlá jako první. Přesně tak to má být.";col="var(--m-recovery)"}
-   else if(d>0){t=`Poslední série byla o ${d} s/km pomalejší než první. Příště začni první úsek o kousek volněji.`;col="var(--m-interval)"}
-   else{t=`Poslední série byla o ${-d} s/km rychlejší než první. Máš rezervu – příště můžeš začít svižněji.`;col="var(--m-warmup)"}
-   ins.textContent=t;ins.style.setProperty("--accent",col);$("insightSec").hidden=false;
-  }
- }
- const missing=r.results.some(x=>x.type!=="recovery"&&!(x.ok&&paceSec(x.sec,x.m)));
- $("dNote").textContent=missing?"Pomlčka znamená, že GPS nemělo dost dat, nejčastěji kvůli slabému signálu nebo zamčenému displeji":"";
- $("dNote").hidden=!missing;
- setState("done");scrollTo(0,0);
-}
-function workoutMeta(w){
- const total=w.steps.reduce((a,s)=>a+estSec(s),0);
- return "≈ "+Math.round(total/60)+" min"+(w.seriesCount?" · "+w.seriesCount+" "+(w.seriesCount<5?"série":"sérií"):"");
-}
-function openPicker(){
- const el=$("pickList");el.innerHTML="";
- library.forEach(w=>{
-  const b=document.createElement("button");b.className="pick";b.setAttribute("role","radio");
-  b.setAttribute("aria-checked",w.file===selected?"true":"false");
-  b.innerHTML=`<span class="radio" aria-hidden="true"></span><span class="pmain"><b></b><span class="meta"></span><span class="strip mini" aria-hidden="true"></span></span>`;
-  const n=splitName(w.name);b.querySelector("b").textContent=n.title;
-  b.querySelector(".meta").textContent=workoutMeta(w)+(n.date?" · "+n.date.replace(/^(\d+)\.(\d+)\.\d+$/,"$1. $2."):"");
-  buildStrip(b.querySelector(".strip"),w.steps);
-  b.addEventListener("click",()=>{selectWorkout(w.file);closePicker();setState("ready");scrollTo(0,0)});
-  el.appendChild(b);
- });
- $("pickSheet").hidden=false;$("pickScrim").hidden=false;
-}
-function closePicker(){$("pickSheet").hidden=true;$("pickScrim").hidden=true}
-function renderHistory(){
- const el=$("histList");el.innerHTML="";
- $("histCount").textContent=hist.length?hist.length:"";
- hist.forEach(r=>{
-  const b=document.createElement("button");
-  b.innerHTML=`<span class="d num">${esc(dShort(r.date))}</span><span class="n">${esc(r.name)}${r.partial?" · nedokončeno":""}</span><span class="t num">${esc(fmt(r.total))}</span>`;
-  b.addEventListener("click",()=>{rpe=r.rpe||{};openSummary(r,true)});
-  el.appendChild(b);
- });
-}
-function closeSummary(){hideRpe();setState("ready");scrollTo(0,0)}
-$("closeBtn").addEventListener("click",closeSummary);
-$("backBtn").addEventListener("click",closeSummary);
-// smazání bez potvrzovacího dialogu – místo něj možnost vrátit
-let toastT=null,undoFn=null;
-function toast(text,undo){
- $("toastText").textContent=text;undoFn=undo;$("toastUndo").hidden=!undo;$("toast").hidden=false;
- clearTimeout(toastT);toastT=setTimeout(()=>{$("toast").hidden=true;undoFn=null},6000);
-}
-$("toastUndo").addEventListener("click",()=>{if(undoFn)undoFn();$("toast").hidden=true;undoFn=null});
-$("deleteBtn").addEventListener("click",()=>{
- const removed=run,pos=hist.findIndex(r=>r.id===removed.id);
- hist=hist.filter(r=>r.id!==removed.id);store.set("history",hist);renderHistory();closeSummary();
- toast("Trénink smazán z historie",()=>{hist.splice(pos,0,removed);store.set("history",hist);renderHistory();setState("ready")});
-});
-
-// ---------- ovládání ----------
-$("startBtn").addEventListener("click",startWorkout);
-$("retryBtn").addEventListener("click",loadWorkout);
-$("pauseBtn").addEventListener("click",()=>{state==="running"?pause():state==="paused"&&resume()});
-$("nextBtn").addEventListener("click",nextManual);
-// konec jen podržením – aby se trénink neukončil omylem v běhu
-(()=>{
- const b=$("stopBtn");let t=null;
- const cancel=()=>{clearTimeout(t);t=null;b.classList.remove("holding")};
- b.addEventListener("pointerdown",e=>{e.preventDefault();b.classList.add("holding");t=setTimeout(()=>{cancel();if(navigator.vibrate)navigator.vibrate(60);stopWorkout()},900)});
- ["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev,()=>{
-  if(t){cancel();$("stopLab").textContent="Drž déle";setTimeout(()=>$("stopLab").textContent="Podrž pro konec",1400)}
- }));
- b.addEventListener("contextmenu",e=>e.preventDefault());
- b.addEventListener("keydown",e=>{if(e.key==="Enter"&&confirm("Ukončit trénink?"))stopWorkout()});
-})();
-document.addEventListener("visibilitychange",()=>{
- if(document.visibilityState!=="visible")return;
- if(state==="running"){unlockAudio();getWakeLock();lastPt=null;tick()}
- else if(state==="ready")loadWorkout();
-});
-if("speechSynthesis"in window)speechSynthesis.getVoices();
-renderHistory();loadWorkout();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
