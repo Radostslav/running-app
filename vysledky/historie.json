@@ -1,0 +1,321 @@
+[
+ {
+  "sport": "beh",
+  "updated": 1791910677826,
+  "id": "1791910677826",
+  "date": 1791910677826,
+  "name": "TRImates 4x (3-2-1 min)",
+  "total": 2429,
+  "dist": 4389,
+  "partial": false,
+  "results": [
+   {
+    "name": "Rozklus",
+    "type": "warmup",
+    "series": 0,
+    "plan": null,
+    "sec": 197,
+    "m": 1003,
+    "ok": true
+   },
+   {
+    "name": "Tempo 10 km",
+    "type": "interval",
+    "series": 1,
+    "plan": 180,
+    "sec": 180,
+    "m": 65,
+    "ok": true
+   },
+   {
+    "name": "Lehký meziklus",
+    "type": "recovery",
+    "series": 1,
+    "plan": 45,
+    "sec": 45,
+    "m": 0,
+    "ok": true
+   },
+   {
+    "name": "Tempo 5 km",
+    "type": "interval",
+    "series": 1,
+    "plan": 120,
+    "sec": 120,
+    "m": 0,
+    "ok": true
+   },
+   {
+    "name": "Lehký meziklus",
+    "type": "recovery",
+    "series": 1,
+    "plan": 45,
+    "sec": 45,
+    "m": 0,
+    "ok": true
+   },
+   {
+    "name": "Svižně, rychleji než 5 km",
+    "type": "interval",
+    "series": 1,
+    "plan": 60,
+    "sec": 60,
+    "m": 0,
+    "ok": true
+   },
+   {
+    "name": "Meziklus mezi sériemi",
+    "type": "recovery",
+    "series": 1,
+    "plan": 120,
+    "sec": 120,
+    "m": 234,
+    "ok": true
+   },
+   {
+    "name": "Tempo 10 km",
+    "type": "interval",
+    "series": 2,
+    "plan": 180,
+    "sec": 180,
+    "m": 675,
+    "ok": true
+   },
+   {
+    "name": "Lehký meziklus",
+    "type": "recovery",
+    "series": 2,
+    "plan": 45,
+    "sec": 45,
+    "m": 360,
+    "ok": true
+   },
+   {
+    "name": "Tempo 5 km",
+    "type": "interval",
+    "series": 2,
+    "plan": 120,
+    "sec": 120,
+    "m": 577,
+    "ok": true
+   },
+   {
+    "name": "Lehký meziklus",
+    "type": "recovery",
+    "series": 2,
+    "plan": 45,
+    "sec": 45,
+    "m": 92,
+    "ok": true
+   },
+   {
+    "name": "Svižně, rychleji než 5 km",
+    "type": "interval",
+    "series": 2,
+    "plan": 60,
+    "sec": 60,
+    "m": 351,
+    "ok": true
+   },
+   {
+    "name": "Meziklus mezi sériemi",
+    "type": "recovery",
+    "series": 2,
+    "plan": 120,
+    "sec": 120,
+    "m": 936,
+    "ok": true
+   },
+   {
+    "name": "Tempo 10 km",
+    "type": "interval",
+    "series": 3,
+    "plan": 180,
+    "sec": 180,
+    "m": 166,
+    "ok": false
+   },
+   {
+    "name": "Lehký meziklus",
+    "type": "recovery",
+    "series": 3,
+    "plan": 45,
+    "sec": 45,
+    "m": 0,
+    "ok": false
+   },
+   {
+    "name": "Tempo 5 km",
+    "type": "interval",
+    "series": 3,
+    "plan": 120,
+    "sec": 120,
+    "m": 0,
+    "ok": true
+   },
+   {
+    "name": "Lehký meziklus",
+    "type": "recovery",
+    "series": 3,
+    "plan": 45,
+    "sec": 45,
+    "m": 0,
+    "ok": true
+   },
+   {
+    "name": "Svižně, rychleji než 5 km",
+    "type": "interval",
+    "series": 3,
+    "plan": 60,
+    "sec": 60,
+    "m": 0,
+    "ok": false
+   },
+   {
+    "name": "Meziklus mezi sériemi",
+    "type": "recovery",
+    "series": 3,
+    "plan": 120,
+    "sec": 120,
+    "m": 0,
+    "ok": false
+   },
+   {
+    "name": "Tempo 10 km",
+    "type": "interval",
+    "series": 4,
+    "plan": 180,
+    "sec": 180,
+    "m": 68,
+    "ok": false
+   },
+   {
+    "name": "Lehký meziklus",
+    "type": "recovery",
+    "series": 4,
+    "plan": 45,
+    "sec": 45,
+    "m": 18,
+    "ok": true
+   },
+   {
+    "name": "Tempo 5 km",
+    "type": "interval",
+    "series": 4,
+    "plan": 120,
+    "sec": 120,
+    "m": 51,
+    "ok": true
+   },
+   {
+    "name": "Lehký meziklus",
+    "type": "recovery",
+    "series": 4,
+    "plan": 45,
+    "sec": 45,
+    "m": 4,
+    "ok": true
+   },
+   {
+    "name": "Svižně, rychleji než 5 km",
+    "type": "interval",
+    "series": 4,
+    "plan": 60,
+    "sec": 60,
+    "m": 17,
+    "ok": true
+   },
+   {
+    "name": "Chůze",
+    "type": "cooldown",
+    "series": 0,
+    "plan": null,
+    "sec": 72,
+    "m": 6,
+    "ok": true
+   }
+  ],
+  "rpe": {
+   "1": 5,
+   "2": 10,
+   "3": 8,
+   "4": 9
+  }
+ },
+ {
+  "sport": "beh",
+  "updated": 1791901034099,
+  "id": "1791901034099",
+  "date": 1791901034099,
+  "name": "TRImates 4x (3-2-1 min)",
+  "total": 111,
+  "dist": 6,
+  "partial": true,
+  "results": [
+   {
+    "name": "Rozklus",
+    "type": "warmup",
+    "series": 0,
+    "plan": null,
+    "sec": 18,
+    "m": 0,
+    "ok": true
+   },
+   {
+    "name": "Tempo 10 km",
+    "type": "interval",
+    "series": 1,
+    "plan": 180,
+    "sec": 8,
+    "m": 6,
+    "ok": true
+   },
+   {
+    "name": "Lehký meziklus",
+    "type": "recovery",
+    "series": 1,
+    "plan": 45,
+    "sec": 10,
+    "m": 0,
+    "ok": false
+   },
+   {
+    "name": "Tempo 5 km",
+    "type": "interval",
+    "series": 1,
+    "plan": 120,
+    "sec": 38,
+    "m": 0,
+    "ok": true
+   },
+   {
+    "name": "Lehký meziklus",
+    "type": "recovery",
+    "series": 1,
+    "plan": 45,
+    "sec": 7,
+    "m": 0,
+    "ok": false
+   },
+   {
+    "name": "Svižně, rychleji než 5 km",
+    "type": "interval",
+    "series": 1,
+    "plan": 60,
+    "sec": 4,
+    "m": 0,
+    "ok": false
+   },
+   {
+    "name": "Meziklus mezi sériemi",
+    "type": "recovery",
+    "series": 1,
+    "plan": 120,
+    "sec": 26,
+    "m": 0,
+    "ok": true
+   }
+  ],
+  "rpe": {}
+ }
+]
