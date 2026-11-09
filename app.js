@@ -47,10 +47,26 @@ const parseTime = v => {
   if (v.includes(":")) { const [m, s] = v.split(":"); return Math.round((Number(m) || 0) * 60 + (Number(s) || 0)); }
   return Math.round((Number(v) || 0) * 60);
 };
+const distTxt = m => m < 1000 ? Math.round(m) + " m" : km(m);
+const distSpoken = m => m < 1000 ? Math.round(m) + " metrů" : km(m);
+const spokenTime = sec => {
+  sec = Math.round(sec); const m = Math.floor(sec / 60), s = sec % 60, out = [];
+  if (m) out.push(m + " " + plural(m, "minuta", "minuty", "minut"));
+  if (s || !m) out.push(s + " " + plural(s, "sekunda", "sekundy", "sekund"));
+  return out.join(" ");
+};
+/** Cíl z editoru → rychlost v m/s (běh: tempo min/km, kolo: km/h) */
+const targetToSpeed = (v, sport) => {
+  v = String(v || "").trim(); if (!v) return null;
+  if (SPORTS[sport].metric === "speed") { const k = parseFloat(v.replace(",", ".")); return k > 0 ? k / 3.6 : null; }
+  const sec = parseTime(v); return sec > 0 ? 1000 / sec : null;
+};
+const targetTxt = (speed, sport) => SPORTS[sport].metric === "speed" ? (speed * 3.6).toFixed(1).replace(".", ",") + " km/h" : fmt(1000 / speed) + " /km";
 const isWalk = s => /chůz|chuz|walk/i.test(s.name);
 const estSec = (s, sport = "beh") => {
   if (s.kind === "time") return s.seconds;
   if (s.kind === "open") return s.type === "cooldown" ? 300 : 360;
+  if (s.target) return s.meters / s.target;
   return s.meters / 1000 * (isWalk(s) ? 660 : SPORTS[sport].kmSec);
 };
 const ICON_CHEV = '<svg width="9" height="14" viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5 7 7l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -138,8 +154,12 @@ function parseJson(obj, sportHint) {
     const type = ["warmup", "interval", "recovery", "cooldown"].includes(key) ? key : key === "rest" ? "recovery" : "interval";
     const raw = (s.description || "").trim(), v = Number(s.endConditionValue) || 0;
     let name = raw ? raw[0].toUpperCase() + raw.slice(1) : fb[type];
-    if (cond === "time") { if (!raw && type === "interval") name = "Interval " + durLabel(v); return { name, type, series, kind: "time", seconds: v }; }
-    if (cond === "distance") return { name, type, series, kind: "distance", meters: v || 1000 };
+    // cíl z Garminu: pace.zone / speed.zone v m/s
+    const tk = (s.targetType && s.targetType.workoutTargetTypeKey) || "";
+    const t1 = Number(s.targetValueOne) || 0, t2 = Number(s.targetValueTwo) || 0;
+    const target = /pace|speed/.test(tk) && (t1 || t2) ? (t1 && t2 ? (t1 + t2) / 2 : t1 || t2) : null;
+    if (cond === "time") { if (!raw && type === "interval") name = "Interval " + durLabel(v); return { name, type, series, kind: "time", seconds: v, target }; }
+    if (cond === "distance") { if (!raw && type === "interval") name = "Interval " + distTxt(v || 1000); return { name, type, series, kind: "distance", meters: v || 1000, target }; }
     // „do stisku tlačítka“: hodnotu od 500 m ber jako vzdálenost, jinak úsek ukončíš sám
     if (cond === "lap.button") return v >= 500 ? { name, type, series, kind: "distance", meters: v } : { name, type, series, kind: "open" };
     return null;
@@ -163,15 +183,18 @@ function parseJson(obj, sportHint) {
   (obj.workoutSegments || []).forEach(seg => visit(seg.workoutSteps, 0));
   if (!out.length) throw new Error("v souboru nejsou kroky tréninku");
   if (!maxS) maxS = inferSeries(out);
-  const lastInt = {};
-  out.forEach((s, i) => { if (s.series && s.type === "interval") lastInt[s.series] = i; });
-  Object.values(lastInt).forEach(i => { out[i].seriesEnd = true; });
-  return { name: obj.workoutName || "Trénink", sport, steps: out, seriesCount: maxS };
+  // na pocit se ptáme jen po sériích s více intervaly (ne po každé opakované dvoustovce)
+  const lastInt = {}, perSeries = {};
+  out.forEach((s, i) => { if (s.series && s.type === "interval") { lastInt[s.series] = i; perSeries[s.series] = (perSeries[s.series] || 0) + 1; } });
+  Object.keys(lastInt).forEach(k => { if (perSeries[k] > 1) out[lastInt[k]].seriesEnd = true; });
+  // „série“ s jediným intervalem jsou ve skutečnosti opakování (např. 8× 200 m)
+  const singleRep = maxS > 0 && Object.values(perSeries).every(n => n <= 1);
+  return { name: obj.workoutName || "Trénink", sport, steps: out, seriesCount: maxS, singleRep };
 }
 /** Trénink zapsaný bez opakování (např. 2× 8-4-2-1) – série se poznají podle opakujícího se vzoru */
 function inferSeries(out) {
-  const ints = out.map((s, i) => s.type === "interval" && s.kind === "time" ? i : -1).filter(i => i >= 0);
-  const d = ints.map(i => out[i].seconds);
+  const ints = out.map((s, i) => s.type === "interval" && s.kind !== "open" ? i : -1).filter(i => i >= 0);
+  const d = ints.map(i => out[i].kind + (out[i].seconds || out[i].meters));
   for (let p = 2; p <= d.length / 2; p++) {
     if (d.length % p || !d.every((x, k) => x === d[k % p])) continue;
     const reps = d.length / p;
@@ -201,7 +224,7 @@ function fromFile(path, sha, obj) {
   const sportDir = SPORTS[parts[1]] ? parts[1] : null;
   const w = parseJson(obj, sportDir);
   const type = parts.length >= 4 ? parts[2] : "Intervaly";
-  return { path, sha, sport: w.sport, type, name: w.name, steps: w.steps, seriesCount: w.seriesCount };
+  return { path, sha, sport: w.sport, type, name: w.name, steps: w.steps, seriesCount: w.seriesCount, singleRep: w.singleRep };
 }
 async function loadLibrary(force) {
   if (!force && Date.now() - lastLoad < 20000) return;
@@ -223,6 +246,7 @@ async function loadLibrary(force) {
   }
   refresh();
 }
+const repWord = (n, single) => single ? "opakování" : plural(n, "série", "série", "sérií");
 const workoutsOf = sport => library.filter(w => w.sport === sport);
 function typesOf(sport) {
   const used = [...new Set(workoutsOf(sport).map(w => w.type))];
@@ -230,7 +254,7 @@ function typesOf(sport) {
 }
 function workoutMeta(w) {
   const total = w.steps.reduce((a, s) => a + estSec(s, w.sport), 0);
-  return "≈ " + Math.round(total / 60) + " min" + (w.seriesCount ? " · " + w.seriesCount + " " + plural(w.seriesCount, "série", "série", "sérií") : "");
+  return "≈ " + Math.round(total / 60) + " min" + (w.seriesCount ? " · " + w.seriesCount + " " + repWord(w.seriesCount, w.singleRep) : "");
 }
 function buildStrip(el, steps, sport) {
   el.innerHTML = "";
@@ -330,7 +354,7 @@ function renderList() {
     if (libState !== "loading") {
       const b = document.createElement("button");
       b.className = "btn btn-secondary"; b.textContent = "Přidat trénink";
-      b.addEventListener("click", () => go("manage", { sport }));
+      b.addEventListener("click", () => addWorkout(sport));
       body.firstChild.appendChild(b);
     }
     return;
@@ -344,6 +368,16 @@ function renderList() {
     list.forEach(w => g.querySelector(".wlist").appendChild(workoutCard(w)));
     body.appendChild(g);
   });
+  const add = document.createElement("button");
+  add.className = "btn btn-secondary add-more";
+  add.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Přidat trénink';
+  add.addEventListener("click", () => addWorkout(sport));
+  body.appendChild(add);
+}
+/** S připojeným GitHubem rovnou editor, jinak správa tréninků s výzvou k připojení */
+function addWorkout(sport) {
+  if (gh.token()) go("editor", { draft: newDraft(sport) });
+  else go("manage", { sport });
 }
 
 // =========================================================
@@ -365,7 +399,7 @@ function renderDetail() {
   const total = w.steps.reduce((a, s) => a + estSec(s, w.sport), 0);
   const dist = w.steps.reduce((a, s) => a + (s.kind === "distance" ? s.meters : 0), 0);
   const f = [["≈ " + Math.round(total / 60), "minut"]];
-  if (w.seriesCount) f.push([w.seriesCount, plural(w.seriesCount, "série", "série", "sérií")]);
+  if (w.seriesCount) f.push([w.seriesCount, repWord(w.seriesCount, w.singleRep)]);
   if (dist && !indoor) {
     const t = new Set(w.steps.filter(s => s.kind === "distance").map(s => s.type));
     f.push([kmNum(dist), "km " + (t.has("warmup") && t.has("cooldown") ? sp.names.warmup.toLowerCase() + " a " + sp.names.cooldown.toLowerCase() : t.has("warmup") ? sp.names.warmup.toLowerCase() : t.has("cooldown") ? sp.names.cooldown.toLowerCase() : "na vzdálenost")]);
@@ -381,7 +415,7 @@ function renderDetail() {
     if (!s.series && lastS > 0) pl.insertAdjacentHTML("beforeend", `<li class="sh">Závěr</li>`);
     lastS = s.series || 0;
     const kind = indoor && s.kind === "distance" ? "open" : s.kind;
-    const v = kind === "distance" ? km(s.meters) : kind === "open" ? "volně" : fmt(s.seconds);
+    const v = (kind === "distance" ? distTxt(s.meters) : kind === "open" ? "volně" : fmt(s.seconds)) + (s.target && !indoor ? " · " + targetTxt(s.target, w.sport) : "");
     pl.insertAdjacentHTML("beforeend", `<li data-type="${s.type}"><span>${esc(s.name)}</span><span class="v num">${esc(v)}</span></li>`);
   });
   $("planCount").textContent = w.steps.length + " " + plural(w.steps.length, "krok", "kroky", "kroků");
@@ -444,7 +478,9 @@ function remainingMs() {
   return Math.max(0, stepEndsAt - Date.now());
 }
 function spoken(s) {
-  return s.name + (s.kind === "distance" ? ". " + km(s.meters) : s.kind === "open" ? ". Až budeš hotový, ťukni na Úsek hotový" : "");
+  const t = s.target ? ", cíl " + (SPORTS[ctx.sport].metric === "speed" ? (s.target * 3.6).toFixed(0) + " kilometrů za hodinu" : spokenTime(1000 / s.target) + " na kilometr") : "";
+  if (s.kind === "distance") return s.name + (/\d/.test(s.name) ? "" : ". " + distSpoken(s.meters)) + t;
+  return s.name + (s.kind === "open" ? ". Až budeš hotový, ťukni na Úsek hotový" : "") + t;
 }
 function enterStep(i, startAt) {
   idx = i; flags = { beeped: {} };
@@ -452,15 +488,41 @@ function enterStep(i, startAt) {
   stepDist = 0; stepFixes = 0; stepMaxGap = 0; lastFixT = startAt;
   const s = cur();
   if (s.kind === "time") stepEndsAt = startAt + s.seconds * 1000;
-  if (s.type === "interval") hideRpe();
+  if (s.type === "interval") { hideRpe(); feedback = ""; }
   const c = $("clock"); c.classList.remove("tick"); void c.offsetWidth; c.classList.add("tick");
+}
+let feedback = "", feedbackSpoken = "";
+/** Porovná úsek s cílem: u vzdálenosti čas úseku, u času tempo / rychlost */
+function evalTarget(s, sec, m, ok) {
+  if (!s.target || !ok || s.kind === "open") return null;
+  const sp = SPORTS[ctx.sport];
+  if (s.kind === "distance") {
+    const tgt = s.meters / s.target, dev = sec - tgt, tol = Math.max(1, tgt * .02), d = Math.round(Math.abs(dev));
+    const verdict = Math.abs(dev) <= tol ? "v cíli" : dev < 0 ? `o ${d} s rychleji` : `o ${d} s pomaleji`;
+    const said = Math.abs(dev) <= tol ? "přesně v cíli" : dev < 0 ? `o ${spokenTime(d)} rychleji` : `o ${spokenTime(d)} pomaleji`;
+    return { dev, txt: `Úsek za ${fmt(sec)}, cíl ${fmt(tgt)} · ${verdict}`, spoken: `Čas ${spokenTime(sec)}, ${said}` };
+  }
+  const v = metric(sec, m, ctx.sport);
+  if (v == null) return null;
+  if (sp.metric === "speed") {
+    const tgt = s.target * 3.6, dev = v - tgt, d = Math.abs(dev).toFixed(1).replace(".", ",");
+    const verdict = Math.abs(dev) <= .5 ? "v cíli" : dev > 0 ? `o ${d} km/h rychleji` : `o ${d} km/h pomaleji`;
+    return { dev, txt: `${metricTxt(v, ctx.sport)}, cíl ${targetTxt(s.target, ctx.sport)} · ${verdict}`, spoken: "Rychlost " + Math.round(v) + " kilometrů za hodinu, " + (Math.abs(dev) <= .5 ? "přesně v cíli" : verdict.replace("km/h", "kilometrů za hodinu")) };
+  }
+  const tgt = 1000 / s.target, dev = v - tgt, d = Math.round(Math.abs(dev));
+  const verdict = Math.abs(dev) <= 3 ? "v cíli" : dev < 0 ? `o ${d} s/km rychleji` : `o ${d} s/km pomaleji`;
+  return { dev, txt: `Tempo ${fmt(v)}, cíl ${fmt(tgt)} · ${verdict}`, spoken: "Tempo " + spokenTime(v) + ", " + (Math.abs(dev) <= 3 ? "přesně v cíli" : verdict.replace("s/km", "sekund na kilometr")) };
 }
 function leaveStep(natural, endT) {
   const s = cur();
   const sec = natural && s.kind === "time" ? s.seconds : (elapsedNow() - (Date.now() - endT) - stepStartElapsed) / 1000;
   const gapEnd = Math.max(stepMaxGap, endT - lastFixT);
+  const ok = !ctx.indoor && stepFixes >= 3 && gapEnd <= 15000;
+  const ev = s.type === "interval" ? evalTarget(s, sec, stepDist, ok) : null;
+  if (ev) { feedback = ev.txt; feedbackSpoken = ev.spoken; }
   results.push({ name: s.name, type: s.type, series: s.series || 0, plan: s.kind === "time" ? s.seconds : null,
-                 sec: Math.round(sec), m: Math.round(stepDist), ok: !ctx.indoor && stepFixes >= 3 && gapEnd <= 15000 });
+                 planM: s.kind === "distance" ? s.meters : null, target: s.target || null, dev: ev ? ev.dev : null,
+                 sec: Math.round(sec), m: Math.round(stepDist), ok });
   if (s.seriesEnd) pendingRpe = s.series;
 }
 function goNext(endT, natural) {
@@ -473,7 +535,8 @@ function announceStep() {
   skippedNote = "";
   if (navigator.vibrate) navigator.vibrate([180, 100, 180]);
   beep(1320, .4);
-  say(spoken(cur()) + (pendingRpe ? ". Ohodnoť sérii." : "."));
+  say((feedbackSpoken ? feedbackSpoken + ". " : "") + spoken(cur()) + (pendingRpe ? ". Ohodnoť sérii." : "."));
+  feedbackSpoken = "";
   if (pendingRpe) { showRpe(pendingRpe); pendingRpe = null; }
 }
 function startWorkout(w) {
@@ -481,9 +544,9 @@ function startWorkout(w) {
   unlockAudio();
   clearTimeout(toastT); $("toast").hidden = true;
   const indoor = w.sport === "kolo" && store.get("bikeEnv", "out") === "in";
-  ctx = { sport: w.sport, indoor, path: w.path, name: cleanTitle(w.name), seriesCount: w.seriesCount };
+  ctx = { sport: w.sport, indoor, path: w.path, name: cleanTitle(w.name), seriesCount: w.seriesCount, singleRep: !!w.singleRep };
   workout = w.steps.map(s => indoor && s.kind === "distance" ? { ...s, kind: "open" } : { ...s });
-  results = []; rpe = {}; pendingRpe = null; elapsedMs = 0; idx = 0; skippedNote = ""; resumedAt = Date.now();
+  results = []; rpe = {}; pendingRpe = null; feedback = ""; feedbackSpoken = ""; elapsedMs = 0; idx = 0; skippedNote = ""; resumedAt = Date.now();
   runState = "running";
   enterStep(0, resumedAt);
   document.body.dataset.state = "running";
@@ -552,7 +615,7 @@ function finishWorkout(partial) {
   const now = Date.now();
   const rec = {
     id: now.toString(36) + Math.random().toString(36).slice(2, 6), date: now, updated: now,
-    sport: ctx.sport, indoor: ctx.indoor, workout: ctx.path, name: ctx.name,
+    sport: ctx.sport, indoor: ctx.indoor, singleRep: ctx.singleRep, workout: ctx.path, name: ctx.name,
     total: Math.round(elapsedMs / 1000), dist: results.reduce((a, r) => a + (r.ok ? r.m : 0), 0),
     partial, results, rpe,
   };
@@ -579,11 +642,18 @@ function onPos(p) {
     const d = hav(lastPt, pt), dt = (pt.t - lastPt.t) / 1000;
     if (d < Math.max(4, acc * .3)) return;                                   // šum na místě
     if (dt > 0 && d / dt > SPORTS[ctx.sport].maxSpeed) { lastPt = pt; return; } // nereálný skok
+    const prev = stepDist, s = cur();
     stepDist += d;
+    if (s.kind === "distance" && prev < s.meters && stepDist >= s.meters) {
+      // dopočítá, kdy přesně byla vzdálenost dosažena (mezi dvěma body GPS)
+      const endT = lastPt.t + (s.meters - prev) / d * (pt.t - lastPt.t), extra = stepDist - s.meters;
+      lastPt = pt; stepDist = s.meters;
+      if (goNext(endT, true)) { stepDist = extra; announceStep(); }
+      render();
+      return;
+    }
   }
   lastPt = pt;
-  const s = cur();
-  if (s.kind === "distance" && stepDist >= s.meters) { if (goNext(Date.now(), true)) announceStep(); }
   render();
 }
 function onGpsErr(e) { gpsState = e.code === 1 ? "denied" : "weak"; render(); }
@@ -597,12 +667,17 @@ function render() {
   const phaseName = phase === "paused" ? "Pozastaveno" : sp.names[phase];
   $("phaseLabel").textContent = phaseName === s.name ? "\u00a0" : phaseName;
   $("stepName").textContent = s.name;
-  $("seriesLabel").textContent = s.series ? `Série ${s.series} z ${ctx.seriesCount}` : idx === 0 ? "Začátek" : "Závěr";
+  $("seriesLabel").textContent = s.series ? `${ctx.singleRep ? "Opakování" : "Série"} ${s.series} z ${ctx.seriesCount}` : idx === 0 ? "Začátek" : "Závěr";
   $("totalLabel").textContent = fmt(elapsedNow() / 1000);
   const c = $("clock"), stepSec = (elapsedNow() - stepStartElapsed) / 1000;
   let prog = 0;
   if (s.kind === "time") { const r = remainingMs(); c.textContent = fmt(Math.ceil(r / 1000)); prog = 1 - r / (s.seconds * 1000); }
   else if (s.kind === "open") { c.textContent = fmt(stepSec); }
+  else if (s.type === "interval" || s.meters < 1000) {
+    // krátký úsek: velké stopky, vzdálenost v řádku pod nimi
+    c.textContent = fmt(stepSec);
+    prog = stepDist / s.meters;
+  }
   else {
     const live = stepDist > 0 || gpsState === "ok";
     c.innerHTML = esc(live ? (stepDist / 1000).toFixed(2).replace(".", ",") : kmNum(s.meters)) + "<small>km</small>";
@@ -622,12 +697,16 @@ function render() {
   else if (gpsState === "wait") live = "Hledám GPS…";
   else if (gpsState === "weak" && stepDist < 80) live = "Slabý GPS signál";
   else if (stepDist >= sp.minDist && stepSec > 8) live = `${metricTxt(metric(stepSec, stepDist, ctx.sport), ctx.sport)} · ${Math.round(stepDist)} m`;
+  if (s.kind === "distance" && (s.type === "interval" || s.meters < 1000) && !ctx.indoor && gpsState !== "denied" && gpsState !== "wait")
+    live = `${Math.min(Math.round(stepDist), s.meters)} z ${distTxt(s.meters)}` + (s.target ? " · cíl " + fmt(s.meters / s.target) : "");
+  else if (s.kind === "time" && s.type === "interval" && s.target && live) live += " · cíl " + targetTxt(s.target, ctx.sport);
+  if (feedback && s.type !== "interval") live = feedback;
   if (skippedNote) live = skippedNote;
   if (runState === "paused") live = "Ťukni na ▶ a pokračuj";
   $("live").textContent = live;
   const n = workout[idx + 1];
   $("nextName").textContent = n ? n.name : "Cíl";
-  $("nextVal").textContent = n ? (n.kind === "distance" ? km(n.meters) : n.kind === "open" ? "volně" : fmt(n.seconds)) : "";
+  $("nextVal").textContent = n ? (n.kind === "distance" ? distTxt(n.meters) : n.kind === "open" ? "volně" : fmt(n.seconds)) : "";
   $("upNext").querySelector(".lab").textContent = n ? "Další" : "Potom";
   $("icPause").style.display = runState === "paused" ? "none" : "";
   $("icPlay").style.display = runState === "paused" ? "" : "none";
@@ -772,6 +851,12 @@ function renderHistory() {
 $("histFilter").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { histFilter = b.dataset.f; renderHistory(); } });
 
 // ---------- obrazovka souhrnu ----------
+function devTxt(x, sport) {
+  const d = x.dev, sign = d > 0 ? "+" : d < 0 ? "−" : "±";
+  if (x.planM) return Math.abs(d) <= Math.max(1, x.planM / x.target * .02) ? "v cíli" : sign + Math.round(Math.abs(d)) + " s";
+  if (SPORTS[sport].metric === "speed") return Math.abs(d) <= .5 ? "v cíli" : sign + Math.abs(d).toFixed(1).replace(".", ",");
+  return Math.abs(d) <= 3 ? "v cíli" : sign + Math.round(Math.abs(d)) + " s";
+}
 function renderSummary() {
   const n = curNav(), r = hist.find(x => x.id === n.id);
   if (!r) { $("dTitle").textContent = "Záznam nenalezen"; return; }
@@ -783,7 +868,7 @@ function renderSummary() {
   const keys0 = [...new Set(r.results.filter(x => x.series).map(x => x.series))];
   const st = [[fmt(r.total), "celkový čas"]];
   if (r.dist) st.push([kmNum(r.dist), "km"]);
-  if (keys0.length) st.push([keys0.length, plural(keys0.length, "série", "série", "sérií")]);
+  if (keys0.length) st.push([keys0.length, repWord(keys0.length, r.singleRep)]);
   $("dStats").innerHTML = st.map(([a, b]) => `<div class="fact"><b class="num">${esc(a)}</b><span>${esc(b)}</span></div>`).join("");
   refreshSync();
 
@@ -794,16 +879,22 @@ function renderSummary() {
   const cols = r.indoor ? 0 : keys.length ? Math.max(...keys.map(k => bySer[k].length)) : 0;
   const hasRpe = keys.some(k => r.rpe && r.rpe[k]);
   if (keys.length && (cols || hasRpe)) {
-    $("seriesTitle").textContent = r.indoor ? "Pocit v sériích" : sp.metric === "speed" ? "Rychlost v sériích, km/h" : "Tempo v sériích, min/km";
+    const allDist = keys.every(k => bySer[k].every(x => x.planM));
+    const word = r.singleRep ? "opakováních" : "sériích";
+    $("seriesTitle").textContent = r.indoor ? "Pocit v " + word : allDist ? "Čas úseků v " + word : sp.metric === "speed" ? "Rychlost v " + word + ", km/h" : "Tempo v " + word + ", min/km";
     const ref = bySer[keys[0]];
     const g = $("seriesGrid");
     g.style.gridTemplateColumns = `auto repeat(${cols},minmax(0,1fr))${hasRpe ? " auto" : ""}`;
-    let h = '<div class="hd rl">Série</div>';
-    for (let c = 0; c < cols; c++) { const x = ref[c] || bySer[keys.find(k => bySer[k][c])][c]; h += `<div class="hd">${esc(x.plan ? durLabel(x.plan) : x.name)}</div>`; }
+    let h = `<div class="hd rl">${r.singleRep ? "Opak." : "Série"}</div>`;
+    for (let c = 0; c < cols; c++) { const x = ref[c] || bySer[keys.find(k => bySer[k][c])][c]; h += `<div class="hd">${esc(x.plan ? durLabel(x.plan) : x.planM ? distTxt(x.planM) : x.name)}</div>`; }
     if (hasRpe) h += '<div class="hd">Pocit</div>';
     keys.forEach(k => {
       h += `<div class="rl">${k}.</div>`;
-      for (let c = 0; c < cols; c++) { const v = bySer[k][c] && val(bySer[k][c]); h += v != null ? `<div class="num">${metricTxt(v, r.sport, false)}</div>` : '<div class="num mut">—</div>'; }
+      for (let c = 0; c < cols; c++) {
+        const x = bySer[k][c], v = x && val(x);
+        if (v == null) { h += '<div class="num mut">—</div>'; continue; }
+        h += `<div class="num cell2">${x.planM ? fmt(x.sec) : metricTxt(v, r.sport, false)}${x.target && x.dev != null ? `<span class="dv">${devTxt(x, r.sport)}</span>` : ""}</div>`;
+      }
       if (hasRpe) { const v = r.rpe[k]; h += v ? `<div><span class="pill num" style="--h:${rpeHue(v)}">${v}</span></div>` : '<div class="mut">—</div>'; }
     });
     g.innerHTML = h;
@@ -835,6 +926,7 @@ function renderSummary() {
         else if (d > 0) { t = `Poslední série byla o ${d} s/km pomalejší než první. Příště začni první úsek o kousek volněji.`; col = "var(--m-interval)"; }
         else { t = `Poslední série byla o ${-d} s/km rychlejší než první. Máš rezervu, příště můžeš začít svižněji.`; col = "var(--m-warmup)"; }
       }
+      if (r.singleRep) t = t.replace("Poslední série byla", "Poslední opakování bylo").replace("stejně rychlá", "stejně rychlé");
       ins.textContent = t; ins.style.setProperty("--accent", col); $("insightSec").hidden = false;
     }
   }
@@ -944,7 +1036,7 @@ function newDraft(sport) {
   return {
     mode: "build", name: "", sport, type: "Intervaly", newType: "",
     warm: sport === "kolo" ? { kind: "time", value: "10:00" } : { kind: "distance", value: "1" }, reps: 4,
-    rows: [{ work: "3:00", rest: "0:45" }, { work: "2:00", rest: "0:45" }, { work: "1:00", rest: "" }],
+    unit: "time", rows: [{ work: "3:00", rest: "0:45", target: "" }, { work: "2:00", rest: "0:45", target: "" }, { work: "1:00", rest: "", target: "" }],
     between: "2:00", cool: { kind: "open", value: "" }, errors: {},
   };
 }
@@ -961,10 +1053,14 @@ function buildGarmin(d) {
   };
   const steps = [];
   const w = edge("warmup", d.warm); if (w) steps.push(w);
-  const rows = d.rows.filter(r => parseTime(r.work) > 0);
+  const workVal = r => d.unit === "distance" ? Math.round(parseFloat(String(r.work).replace(",", ".")) || 0) : parseTime(r.work);
+  const rows = d.rows.filter(r => workVal(r) > 0);
   const inner = [];
   rows.forEach((r, i) => {
-    inner.push(mk("interval", "time", parseTime(r.work)));
+    const step = mk("interval", d.unit === "distance" ? "distance" : "time", workVal(r));
+    const speed = d.unit === "distance" ? targetToSpeed(r.target, d.sport) : null;
+    if (speed) Object.assign(step, { targetType: { workoutTargetTypeKey: sp.metric === "speed" ? "speed.zone" : "pace.zone" }, targetValueOne: +(speed * .98).toFixed(3), targetValueTwo: +(speed * 1.02).toFixed(3) });
+    inner.push(step);
     const last = i === rows.length - 1;
     const rest = last ? (d.reps > 1 ? parseTime(d.between) : 0) : parseTime(r.rest);
     if (rest > 0) inner.push(mk("recovery", "time", rest));
@@ -1004,20 +1100,22 @@ function renderEditor() {
     ${d.type === "__new" ? `<input class="input" id="edNewType" style="margin-top:var(--s-xs)" value="${esc(d.newType)}" placeholder="Název nového typu" aria-label="Název nového typu">` : ""}
     ${e.type ? `<p class="error">${e.type}</p>` : ""}</div>`;
   if (d.mode === "build") {
-    const sp = SPORTS[d.sport];
+    const sp = SPORTS[d.sport], dist = d.unit === "distance";
     h += edgeField(d, "warm", sp.names.warmup);
     h += `<div class="box"><span class="lbl">Série</span>
       <div class="field" style="margin-top:var(--s-s)"><span class="lbl" style="font-weight:400">Počet opakování</span>
        <div class="stepper"><button data-reps="-1" aria-label="Méně">−</button><output id="edReps">${d.reps}</output><button data-reps="1" aria-label="Více">+</button></div></div>
-      <div class="bhead"><span></span><span>Interval</span><span>${sp.names.recovery === "Volně" ? "Volně" : "Meziklus"}</span><span></span></div>
-      ${d.rows.map((r, i) => `<div class="brow"><span class="n">${i + 1}.</span>
-        <input class="input" data-row="${i}" data-f="work" inputmode="decimal" value="${esc(r.work)}" aria-label="Interval ${i + 1}, min:s">
-        ${i < d.rows.length - 1 ? `<input class="input" data-row="${i}" data-f="rest" inputmode="decimal" value="${esc(r.rest)}" aria-label="Pauza po intervalu ${i + 1}, min:s">` : `<span class="help" style="text-align:center">${d.reps > 1 ? "viz níže" : "—"}</span>`}
+      <div class="seg" style="margin-top:var(--s-s)" data-unitseg><button data-u="time" aria-pressed="${d.unit === "time"}">Úseky na čas</button><button data-u="distance" aria-pressed="${d.unit === "distance"}">Na vzdálenost</button></div>
+      <div class="bhead${dist ? " d" : ""}"><span></span><span>${dist ? "Úsek, m" : "Interval"}</span>${dist ? `<span>Cíl ${sp.metric === "speed" ? "km/h" : "/km"}</span>` : ""}<span>${sp.names.recovery === "Volně" ? "Volně" : "Meziklus"}</span><span></span></div>
+      ${d.rows.map((r, i) => `<div class="brow${dist ? " d" : ""}"><span class="n">${i + 1}.</span>
+        <input class="input" data-row="${i}" data-f="work" inputmode="${dist ? "numeric" : "decimal"}" value="${esc(r.work)}" aria-label="${dist ? "Úsek " + (i + 1) + ", metry" : "Interval " + (i + 1) + ", min:s"}">
+        ${dist ? `<input class="input" data-row="${i}" data-f="target" inputmode="decimal" value="${esc(r.target || "")}" placeholder="${sp.metric === "speed" ? "35" : "4:00"}" aria-label="Cíl úseku ${i + 1}">` : ""}
+        ${i < d.rows.length - 1 ? `<input class="input" data-row="${i}" data-f="rest" inputmode="decimal" value="${esc(r.rest)}" aria-label="Pauza po úseku ${i + 1}, min:s">` : `<span class="help" style="text-align:center">${d.reps > 1 ? "viz níže" : "—"}</span>`}
         <button class="iconbtn" data-del="${i}" aria-label="Odebrat úsek ${i + 1}">✕</button></div>`).join("")}
-      <p class="help">Časy piš jako min:s, například 3:00 nebo 0:45</p>
+      <p class="help">${dist ? `Úsek v metrech, třeba 200. Cíl je nepovinný: ${sp.metric === "speed" ? "rychlost v km/h, třeba 35" : "tempo v min/km, třeba 4:00"}. Po úseku ti aplikace řekne, jestli jsi v něm. Pauzy piš jako min:s.` : "Časy piš jako min:s, například 3:00 nebo 0:45"}</p>
       ${e.rows ? `<p class="error">${e.rows}</p>` : ""}
       <button class="btn-tertiary" id="edAddRow" style="margin-top:var(--s-xs)">Přidat úsek</button>
-      ${d.reps > 1 ? `<div class="field"><label for="edBetween">Pauza mezi sériemi</label><div class="inline" style="margin-top:0"><input class="input small" id="edBetween" inputmode="decimal" value="${esc(d.between)}"><span class="unit">min:s</span></div></div>` : ""}
+      ${d.reps > 1 ? `<div class="field"><label for="edBetween">${d.rows.length === 1 ? "Pauza mezi opakováními" : "Pauza mezi sériemi"}</label><div class="inline" style="margin-top:0"><input class="input small" id="edBetween" inputmode="decimal" value="${esc(d.between)}"><span class="unit">min:s</span></div></div>` : ""}
      </div>`;
     h += edgeField(d, "cool", sp.names.cooldown);
   }
@@ -1051,9 +1149,15 @@ $("edBody").addEventListener("click", e => {
     const key = b.closest("[data-edge]").dataset.edge;
     d[key] = { kind: b.dataset.k, value: b.dataset.k === "distance" ? "1" : b.dataset.k === "time" ? "10:00" : "" };
   }
+  else if (b.closest("[data-unitseg]")) {
+    if (d.unit === b.dataset.u) return;
+    d.unit = b.dataset.u;
+    if (d.unit === "distance") { d.rows = [{ work: "200", target: "", rest: "1:00" }]; d.reps = 8; d.between = "1:00"; }
+    else { d.rows = [{ work: "3:00", rest: "0:45", target: "" }, { work: "2:00", rest: "0:45", target: "" }, { work: "1:00", rest: "", target: "" }]; d.reps = 4; d.between = "2:00"; }
+  }
   else if (b.dataset.reps) d.reps = Math.min(20, Math.max(1, d.reps + Number(b.dataset.reps)));
-  else if (b.dataset.del) { d.rows.splice(+b.dataset.del, 1); if (!d.rows.length) d.rows.push({ work: "1:00", rest: "" }); }
-  else if (b.id === "edAddRow") { const last = d.rows[d.rows.length - 1]; if (last && !last.rest) last.rest = "1:00"; d.rows.push({ work: "1:00", rest: "" }); }
+  else if (b.dataset.del) { d.rows.splice(+b.dataset.del, 1); if (!d.rows.length) d.rows.push({ work: d.unit === "distance" ? "200" : "1:00", rest: "", target: "" }); }
+  else if (b.id === "edAddRow") { const last = d.rows[d.rows.length - 1]; if (last && !last.rest) last.rest = "1:00"; d.rows.push({ work: d.unit === "distance" ? "200" : "1:00", rest: "", target: "" }); }
   else return;
   renderEditor();
 });
@@ -1064,7 +1168,11 @@ $("saveBtn").addEventListener("click", async () => {
   if (!d.name.trim()) d.errors.name = "Zadej název tréninku";
   if (!type) d.errors.type = "Zadej název typu";
   else if (/[\/\\]/.test(type)) d.errors.type = "Název typu nesmí obsahovat lomítko";
-  if (d.mode === "build" && !d.rows.some(r => parseTime(r.work) > 0)) d.errors.rows = "Přidej aspoň jeden interval s časem";
+  if (d.mode === "build" && d.unit !== "distance" && !d.rows.some(r => parseTime(r.work) > 0)) d.errors.rows = "Přidej aspoň jeden interval s časem";
+  if (d.mode === "build" && d.unit === "distance") {
+    if (!d.rows.some(r => parseFloat(String(r.work).replace(",", ".")) > 0)) d.errors.rows = "Zadej délku úseku v metrech, třeba 200";
+    else if (d.rows.some(r => String(r.target || "").trim() && !targetToSpeed(r.target, d.sport))) d.errors.rows = SPORTS[d.sport].metric === "speed" ? "Cíl zadej jako rychlost v km/h, třeba 35" : "Cíl zadej jako tempo min:s na kilometr, třeba 4:00";
+  }
   if (Object.keys(d.errors).length) { renderEditor(); return; }
   const obj = draftObj(d);
   const text = JSON.stringify(obj, null, 2) + "\n";

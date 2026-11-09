@@ -1,5 +1,5 @@
 // Offline režim: aplikace se otevře i bez signálu (vždy se zkusí nejdřív nová verze ze sítě)
-const CACHE = "trimates-v2";
+const CACHE = "trimates-v3";
 const CORE = ["./", "index.html", "styles.css", "app.js"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
