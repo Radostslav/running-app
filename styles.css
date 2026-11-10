@@ -276,3 +276,40 @@ body[data-screen=run] .appbar{display:none}
 .grid .dv{font-size:12px;font-weight:var(--w-regular);color:var(--text-2);font-stretch:100%;font-variation-settings:"wdth" 100}
 /* tlačítko pro přidání tréninku pod seznamem */
 .add-more{margin-top:var(--s-l);gap:var(--s-xs)}
+
+/* =========================================================
+   Editor kroků (Garmin / Polar)
+   ========================================================= */
+.scard{display:flex;align-items:center;gap:var(--s-s);width:100%;min-height:64px;margin-top:var(--s-xs);padding:var(--s-s) var(--s-s) var(--s-s) var(--s-xs);border-radius:12px;background:var(--surface);text-align:left}
+.scard:active{background:var(--press)}
+.scard .bar{flex:0 0 4px;align-self:stretch;border-radius:2px;background:var(--seg)}
+.scard .smain{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.scard .meta{font-size:var(--t-sm);color:var(--text-2)}
+.scard svg{color:var(--text-2);flex:0 0 auto}
+.scard.bad,.rbox.bad{box-shadow:0 0 0 2px var(--danger)}
+.rbox{margin-top:var(--s-xs);padding:var(--s-s);border-radius:var(--r-m);border:2px solid var(--border-strong)}
+.rbox .scard{background:var(--bg)}
+.rhead{display:flex;align-items:center;justify-content:space-between;gap:var(--s-s)}
+.rhead output{min-width:56px}
+.rfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--s-xs);margin-top:var(--s-xs)}
+.check{display:flex;align-items:flex-start;gap:var(--s-s);margin-top:var(--s-s);min-height:48px}
+.check input{width:24px;height:24px;flex:0 0 24px;accent-color:var(--text);margin:0}
+.check .sub{display:block;font-size:var(--t-sm);color:var(--text-2)}
+.addrow{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-xs);margin-top:var(--s-s)}
+.addrow .btn{min-height:56px}
+.input.bad{border-color:var(--danger)}
+.opt{font-weight:var(--w-regular);color:var(--text-2);font-size:var(--t-sm)}
+.seg.mini{margin-top:0;width:auto;grid-auto-columns:48px}
+.inline .input.small{max-width:88px}
+.errsum{margin-top:var(--s-s);padding:var(--s-s);border-radius:var(--r-m);border:2px solid var(--danger);background:var(--surface)}
+.errsum:focus{outline:none}
+.errsum b{color:var(--danger)}
+.errsum ul{margin:var(--s-xs) 0 0;padding-left:20px}
+.errsum li{margin-top:var(--s-2xs)}
+.errsum a{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+.sheet.tall .inner{max-height:calc(100svh - 64px - env(safe-area-inset-top));overflow:auto;padding-bottom:var(--s-xs)}
+.sheet.tall .field:first-of-type{margin-top:var(--s-s)}
+.sheetfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--s-xs);margin-top:var(--s-s)}
+.mrow-del.edit{color:var(--text)}
+
+.errsum,.scard,.rbox,.input{scroll-margin-top:calc(env(safe-area-inset-top) + 80px)}

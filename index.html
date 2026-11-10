@@ -99,7 +99,7 @@
  <div class="dstats" id="dStats"></div>
  <p class="sync" id="dSync"></p>
  <div class="section" id="insightSec" hidden><div class="insight" id="insight"></div></div>
- <div class="section" id="seriesTbl" hidden><h3 id="seriesTitle">Tempo v sériích</h3><div class="card"><div class="grid" id="seriesGrid"></div></div><p class="note" id="dNote" hidden></p></div>
+ <div class="section" id="seriesTbl" hidden><div id="seriesBody"></div><p class="note" id="dNote" hidden></p></div>
  <div class="section" id="otherSec" hidden><h3 id="otherTitle">Rozklus a výklus</h3><div class="card rows" id="otherRows"></div></div>
  <div class="del-wrap"><button class="btn-tertiary danger" id="deleteBtn" hidden>Smazat z historie</button></div>
  <div class="dock"><button class="btn btn-primary" id="closeBtn">Hotovo</button></div>
@@ -194,6 +194,10 @@
   </nav>
  </div>
 </div>
+
+<!-- ÚPRAVA KROKU -->
+<div class="scrim" id="stepScrim" hidden></div>
+<div class="sheet tall" id="stepSheet" hidden role="dialog" aria-labelledby="stepTitle"><div class="inner" id="stepBody"></div></div>
 
 <!-- HODNOCENÍ SÉRIE -->
 <div class="scrim" id="rpeScrim" hidden></div>

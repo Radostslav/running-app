@@ -148,7 +148,7 @@ function parseJson(obj, sportHint) {
   const sport = SPORTS[sportHint] ? sportHint : sportFromGarmin(obj);
   const fb = SPORTS[sport].names;
   const out = [];
-  let maxS = 0;
+  let maxS = 0, block = 0;
   function mk(s, series) {
     const key = (s.stepType && s.stepType.stepTypeKey) || "", cond = (s.endCondition && s.endCondition.conditionTypeKey) || "";
     const type = ["warmup", "interval", "recovery", "cooldown"].includes(key) ? key : key === "rest" ? "recovery" : "interval";
@@ -164,23 +164,25 @@ function parseJson(obj, sportHint) {
     if (cond === "lap.button") return v >= 500 ? { name, type, series, kind: "distance", meters: v } : { name, type, series, kind: "open" };
     return null;
   }
-  function visit(steps, series) {
+  // každý blok opakování má vlastní číslování (1 z 6), série jsou ale v celém tréninku jedinečné
+  function visit(steps, series, meta) {
     (steps || []).forEach(s => {
       if (s.type === "RepeatGroupDTO" || (s.stepType && s.stepType.stepTypeKey === "repeat")) {
         const reps = Math.max(1, Number(s.numberOfIterations || s.endConditionValue || 1));
-        maxS = Math.max(maxS, reps);
+        const top = !series, base = maxS;
+        if (top) { block++; maxS += reps; }
         for (let r = 0; r < reps; r++) {
           const before = out.length;
-          visit(s.workoutSteps, series || r + 1);
+          visit(s.workoutSteps, top ? base + r + 1 : series, top ? { rep: r + 1, repCount: reps, block } : meta);
           if (r === reps - 1 && s.skipLastRestStep && out.length > before && out[out.length - 1].type === "recovery") out.pop();
         }
         return;
       }
       const st = mk(s, series);
-      if (st && (st.kind !== "time" || st.seconds > 0)) out.push(st);
+      if (st && (st.kind !== "time" || st.seconds > 0)) out.push(meta ? Object.assign(st, meta) : st);
     });
   }
-  (obj.workoutSegments || []).forEach(seg => visit(seg.workoutSteps, 0));
+  (obj.workoutSegments || []).forEach(seg => visit(seg.workoutSteps, 0, null));
   if (!out.length) throw new Error("v souboru nejsou kroky tréninku");
   if (!maxS) maxS = inferSeries(out);
   // na pocit se ptáme jen po sériích s více intervaly (ne po každé opakované dvoustovce)
@@ -200,7 +202,7 @@ function inferSeries(out) {
     const reps = d.length / p;
     for (let r = 0; r < reps; r++) {
       const from = ints[r * p], to = r < reps - 1 ? ints[(r + 1) * p] - 1 : ints[ints.length - 1];
-      for (let i = from; i <= to; i++) out[i].series = r + 1;
+      for (let i = from; i <= to; i++) Object.assign(out[i], { series: r + 1, rep: r + 1, repCount: reps, block: 1 });
     }
     return reps;
   }
@@ -216,7 +218,7 @@ function cleanGarmin(obj) {
 // =========================================================
 // Knihovna tréninků (složka treninky/<sport>/<typ>/*.json)
 // =========================================================
-let library = store.get("library3", []);
+let library = store.get("library4", []);
 let libState = library.length ? "cached" : "loading", lastLoad = 0;
 
 function fromFile(path, sha, obj) {
@@ -238,7 +240,7 @@ async function loadLibrary(force) {
       try { return fromFile(f.path, f.sha, JSON.parse(await gh.raw(f.path))); } catch (e) { return null; }
     }));
     library = list.filter(Boolean);
-    store.set("library3", library);
+    store.set("library4", library);
     lastLoad = Date.now();
     libState = "ok";
   } catch (e) {
@@ -411,7 +413,7 @@ function renderDetail() {
   pl.innerHTML = "";
   let lastS = -1;
   w.steps.forEach(s => {
-    if (s.series && s.series !== lastS) pl.insertAdjacentHTML("beforeend", `<li class="sh">${s.series}. série</li>`);
+    if (s.series && s.series !== lastS) pl.insertAdjacentHTML("beforeend", `<li class="sh">${s.rep || s.series}. ${w.singleRep ? "opakování" : "série"}</li>`);
     if (!s.series && lastS > 0) pl.insertAdjacentHTML("beforeend", `<li class="sh">Závěr</li>`);
     lastS = s.series || 0;
     const kind = indoor && s.kind === "distance" ? "open" : s.kind;
@@ -521,7 +523,7 @@ function leaveStep(natural, endT) {
   const ev = s.type === "interval" ? evalTarget(s, sec, stepDist, ok) : null;
   if (ev) { feedback = ev.txt; feedbackSpoken = ev.spoken; }
   results.push({ name: s.name, type: s.type, series: s.series || 0, plan: s.kind === "time" ? s.seconds : null,
-                 planM: s.kind === "distance" ? s.meters : null, target: s.target || null, dev: ev ? ev.dev : null,
+                 planM: s.kind === "distance" ? s.meters : null, block: s.block || (s.series ? 1 : 0), rep: s.rep || s.series || 0, target: s.target || null, dev: ev ? ev.dev : null,
                  sec: Math.round(sec), m: Math.round(stepDist), ok });
   if (s.seriesEnd) pendingRpe = s.series;
 }
@@ -667,7 +669,7 @@ function render() {
   const phaseName = phase === "paused" ? "Pozastaveno" : sp.names[phase];
   $("phaseLabel").textContent = phaseName === s.name ? "\u00a0" : phaseName;
   $("stepName").textContent = s.name;
-  $("seriesLabel").textContent = s.series ? `${ctx.singleRep ? "Opakování" : "Série"} ${s.series} z ${ctx.seriesCount}` : idx === 0 ? "Začátek" : "Závěr";
+  $("seriesLabel").textContent = s.series ? `${ctx.singleRep ? "Opakování" : "Série"} ${s.rep || s.series} z ${s.repCount || ctx.seriesCount}` : idx === 0 ? "Začátek" : "Závěr";
   $("totalLabel").textContent = fmt(elapsedNow() / 1000);
   const c = $("clock"), stepSec = (elapsedNow() - stepStartElapsed) / 1000;
   let prog = 0;
@@ -748,7 +750,10 @@ $("nextBtn").addEventListener("click", nextManual);
 // ---------- hodnocení série ----------
 const rpeHue = n => Math.round(140 - (n - 1) * (130 / 9));
 let rpeFor = null;
-function showRpe(series) { rpeFor = series; $("rpeTitle").textContent = `Jak těžká byla ${series}. série?`; $("rpeSheet").hidden = false; $("rpeScrim").hidden = false; }
+function showRpe(series) {
+  rpeFor = series;
+  const st = workout.find(x => x.series === series) || {};
+  $("rpeTitle").textContent = `Jak těžká byla ${st.rep || series}. série?`; $("rpeSheet").hidden = false; $("rpeScrim").hidden = false; }
 function hideRpe() { $("rpeSheet").hidden = true; $("rpeScrim").hidden = true; rpeFor = null; }
 for (let n = 1; n <= 10; n++) {
   const b = document.createElement("button");
@@ -876,20 +881,24 @@ function renderSummary() {
   const bySer = {};
   r.results.forEach(x => { if (x.series && x.type === "interval") (bySer[x.series] = bySer[x.series] || []).push(x); });
   const keys = Object.keys(bySer).map(Number).sort((a, b) => a - b);
-  const cols = r.indoor ? 0 : keys.length ? Math.max(...keys.map(k => bySer[k].length)) : 0;
-  const hasRpe = keys.some(k => r.rpe && r.rpe[k]);
-  if (keys.length && (cols || hasRpe)) {
-    const allDist = keys.every(k => bySer[k].every(x => x.planM));
-    const word = r.singleRep ? "opakováních" : "sériích";
-    $("seriesTitle").textContent = r.indoor ? "Pocit v " + word : allDist ? "Čas úseků v " + word : sp.metric === "speed" ? "Rychlost v " + word + ", km/h" : "Tempo v " + word + ", min/km";
-    const ref = bySer[keys[0]];
-    const g = $("seriesGrid");
-    g.style.gridTemplateColumns = `auto repeat(${cols},minmax(0,1fr))${hasRpe ? " auto" : ""}`;
-    let h = `<div class="hd rl">${r.singleRep ? "Opak." : "Série"}</div>`;
-    for (let c = 0; c < cols; c++) { const x = ref[c] || bySer[keys.find(k => bySer[k][c])][c]; h += `<div class="hd">${esc(x.plan ? durLabel(x.plan) : x.planM ? distTxt(x.planM) : x.name)}</div>`; }
+  const blockOf = k => bySer[k][0].block || 1;
+  const blocks = [...new Set(keys.map(blockOf))];
+  let tables = "";
+  blocks.forEach((bl, bi) => {
+    const bk = keys.filter(k => blockOf(k) === bl);
+    const cols = r.indoor ? 0 : Math.max(...bk.map(k => bySer[k].length));
+    const hasRpe = bk.some(k => r.rpe && r.rpe[k]);
+    if (!cols && !hasRpe) return;
+    const single = bk.every(k => bySer[k].length === 1);
+    const allDist = bk.every(k => bySer[k].every(x => x.planM));
+    const word = single ? "opakováních" : "sériích";
+    const title = r.indoor ? "Pocit v " + word : allDist ? "Čas úseků v " + word : sp.metric === "speed" ? "Rychlost v " + word + ", km/h" : "Tempo v " + word + ", min/km";
+    const ref = bySer[bk[0]];
+    let h = `<div class="hd rl">${single ? "Opak." : "Série"}</div>`;
+    for (let c = 0; c < cols; c++) { const x = ref[c] || bySer[bk.find(k => bySer[k][c])][c]; h += `<div class="hd">${esc(x.plan ? durLabel(x.plan) : x.planM ? distTxt(x.planM) : x.name)}</div>`; }
     if (hasRpe) h += '<div class="hd">Pocit</div>';
-    keys.forEach(k => {
-      h += `<div class="rl">${k}.</div>`;
+    bk.forEach((k, ri) => {
+      h += `<div class="rl">${bySer[k][0].rep || ri + 1}.</div>`;
       for (let c = 0; c < cols; c++) {
         const x = bySer[k][c], v = x && val(x);
         if (v == null) { h += '<div class="num mut">—</div>'; continue; }
@@ -897,10 +906,11 @@ function renderSummary() {
       }
       if (hasRpe) { const v = r.rpe[k]; h += v ? `<div><span class="pill num" style="--h:${rpeHue(v)}">${v}</span></div>` : '<div class="mut">—</div>'; }
     });
-    g.innerHTML = h;
-    $("seriesTbl").hidden = false;
-  } else $("seriesTbl").hidden = true;
-
+    tables += `<h3${bi ? ' style="margin-top:var(--s-m)"' : ""}>${blocks.length > 1 ? (bi + 1) + ". blok · " : ""}${title}</h3>
+      <div class="card"><div class="grid" style="grid-template-columns:auto repeat(${cols},minmax(0,1fr))${hasRpe ? " auto" : ""}">${h}</div></div>`;
+  });
+  $("seriesBody").innerHTML = tables;
+  $("seriesTbl").hidden = !tables;
   const other = r.results.filter(x => !x.series && x.type !== "recovery");
   $("otherRows").innerHTML = other.map(x => { const v = val(x); return `<div class="r"><b>${esc(x.name)}</b><span class="num">${fmt(x.sec)}${x.ok && x.m ? " · " + km(x.m) : ""}</span><em class="num">${metricTxt(v, r.sport)}</em></div>`; }).join("");
   $("otherSec").hidden = !other.length;
@@ -909,8 +919,9 @@ function renderSummary() {
   // trenérský postřeh: první vs. poslední série
   const ins = $("insight");
   $("insightSec").hidden = true;
-  if (keys.length >= 2 && !r.indoor) {
-    const a = bySer[keys[0]], b = bySer[keys[keys.length - 1]];
+  const fk = keys.filter(k => blockOf(k) === blocks[0]);
+  if (fk.length >= 2 && !r.indoor) {
+    const a = bySer[fk[0]], b = bySer[fk[fk.length - 1]];
     let sa = 0, sb = 0, cnt = 0;
     for (let c = 0; c < Math.min(a.length, b.length); c++) { const pa = val(a[c]), pb = val(b[c]); if (pa != null && pb != null) { sa += pa; sb += pb; cnt++; } }
     if (cnt) {
@@ -926,7 +937,7 @@ function renderSummary() {
         else if (d > 0) { t = `Poslední série byla o ${d} s/km pomalejší než první. Příště začni první úsek o kousek volněji.`; col = "var(--m-interval)"; }
         else { t = `Poslední série byla o ${-d} s/km rychlejší než první. Máš rezervu, příště můžeš začít svižněji.`; col = "var(--m-warmup)"; }
       }
-      if (r.singleRep) t = t.replace("Poslední série byla", "Poslední opakování bylo").replace("stejně rychlá", "stejně rychlé");
+      if (fk.every(k => bySer[k].length === 1)) t = t.replace("Poslední série byla", "Poslední opakování bylo").replace("stejně rychlá", "stejně rychlé");
       ins.textContent = t; ins.style.setProperty("--accent", col); $("insightSec").hidden = false;
     }
   }
@@ -991,6 +1002,11 @@ function renderManage() {
       row.querySelector("b").textContent = cleanTitle(w.name);
       row.querySelector("span").textContent = workoutMeta(w);
       if (hasToken) {
+        const ed = document.createElement("button");
+        ed.className = "mrow-del edit"; ed.textContent = "Upravit";
+        ed.setAttribute("aria-label", "Upravit trénink " + cleanTitle(w.name));
+        ed.addEventListener("click", () => editWorkout(w));
+        row.appendChild(ed);
         const d = document.createElement("button");
         d.className = "mrow-del"; d.textContent = "Smazat";
         d.setAttribute("aria-label", "Smazat trénink " + cleanTitle(w.name));
@@ -1013,7 +1029,7 @@ $("importFile").addEventListener("change", async e => {
   try {
     const obj = cleanGarmin(JSON.parse(await f.text()));
     const p = parseJson(obj);
-    go("editor", { draft: { mode: "import", name: cleanTitle(p.name), sport: p.sport, type: "Intervaly", newType: "", imported: obj } });
+    go("editor", { draft: garminToDraft(obj, { mode: "import", name: p.name, sport: p.sport }) });
   } catch (err) {
     toast("Soubor se nepodařilo načíst: " + err.message);
   }
@@ -1022,178 +1038,372 @@ $("importFile").addEventListener("change", async e => {
 /** Mazání s možností vrátit: soubor se z GitHubu smaže až po 6 s */
 function deleteWorkout(w) {
   const pos = library.indexOf(w);
-  library.splice(pos, 1); store.set("library3", library); renderManage();
-  toast("Trénink smazán", () => { library.splice(pos, 0, w); store.set("library3", library); refresh(); }, async () => {
+  library.splice(pos, 1); store.set("library4", library); renderManage();
+  toast("Trénink smazán", () => { library.splice(pos, 0, w); store.set("library4", library); refresh(); }, async () => {
     try { await gh.del(w.path, w.sha, "Smazán trénink " + cleanTitle(w.name)); }
-    catch (e) { library.splice(pos, 0, w); store.set("library3", library); refresh(); toast("Smazání se nepovedlo, zkus to znovu"); }
+    catch (e) { library.splice(pos, 0, w); store.set("library4", library); refresh(); toast("Smazání se nepovedlo, zkus to znovu"); }
   });
 }
 
 // =========================================================
-// Editor tréninku – naklikání nebo import z Garminu
+// Editor tréninku – seznam kroků a bloků opakování (inspirace Garmin Connect / Polar Flow)
+// Krok = typ + délka (čas / vzdálenost / do stisku tlačítka) + volitelný cíl tempa či rychlosti
 // =========================================================
+const uid = () => Math.random().toString(36).slice(2, 9);
+const STEP_TYPES = ["warmup", "interval", "recovery", "cooldown"];
+const mkStep = (type, end, value, extra = {}) => ({ id: uid(), kind: "step", type, end, value, target: null, desc: "", ...extra });
+
 function newDraft(sport) {
+  const run = sport !== "kolo";
   return {
-    mode: "build", name: "", sport, type: "Intervaly", newType: "",
-    warm: sport === "kolo" ? { kind: "time", value: "10:00" } : { kind: "distance", value: "1" }, reps: 4,
-    unit: "time", rows: [{ work: "3:00", rest: "0:45", target: "" }, { work: "2:00", rest: "0:45", target: "" }, { work: "1:00", rest: "", target: "" }],
-    between: "2:00", cool: { kind: "open", value: "" }, errors: {},
+    mode: "new", name: "", sport, type: "Intervaly", newType: "", errors: null,
+    steps: [
+      run ? mkStep("warmup", "distance", 1000) : mkStep("warmup", "time", 600),
+      { id: uid(), kind: "repeat", count: 4, skipLast: true, steps: [mkStep("interval", "time", 180), mkStep("recovery", "time", 60)] },
+      mkStep("cooldown", "open", 0),
+    ],
   };
 }
-/** Z naklikaného tréninku vytvoří soubor ve formátu Garmin, aby se dal číst stejně jako importované */
-function buildGarmin(d) {
+/** Garmin JSON → kroky editoru (zachová opakování i cíle) */
+function garminToSteps(list) {
+  return (list || []).map(s => {
+    if (s.type === "RepeatGroupDTO" || (s.stepType && s.stepType.stepTypeKey === "repeat")) {
+      return { id: uid(), kind: "repeat", count: Math.max(1, Number(s.numberOfIterations || s.endConditionValue || 1)), skipLast: !!s.skipLastRestStep,
+               steps: garminToSteps(s.workoutSteps).filter(x => x.kind === "step") };
+    }
+    const key = (s.stepType && s.stepType.stepTypeKey) || "", cond = (s.endCondition && s.endCondition.conditionTypeKey) || "";
+    const type = STEP_TYPES.includes(key) ? key : key === "rest" ? "recovery" : "interval";
+    const v = Number(s.endConditionValue) || 0;
+    let end = "open", value = 0;
+    if (cond === "time") { end = "time"; value = v; }
+    else if (cond === "distance") { end = "distance"; value = v || 1000; }
+    else if (cond === "lap.button" && v >= 500) { end = "distance"; value = v; }
+    const tk = (s.targetType && s.targetType.workoutTargetTypeKey) || "";
+    const t1 = Number(s.targetValueOne) || 0, t2 = Number(s.targetValueTwo) || 0;
+    const target = /pace|speed/.test(tk) && (t1 || t2) ? (t1 && t2 ? (t1 + t2) / 2 : t1 || t2) : null;
+    return mkStep(type, end, value, { target, desc: (s.description || "").trim() });
+  });
+}
+function garminToDraft(obj, extra) {
+  const steps = [];
+  (obj.workoutSegments || []).forEach(seg => steps.push(...garminToSteps(seg.workoutSteps)));
+  return { errors: null, newType: "", type: "Intervaly", name: obj.workoutName || "", sport: sportFromGarmin(obj), steps, ...extra };
+}
+/** Kroky editoru → Garmin JSON (stejný formát jako export z Garmin Connect) */
+function draftToGarmin(d) {
   const sp = SPORTS[d.sport];
   let order = 1;
-  const mk = (key, cond, val) => ({ type: "ExecutableStepDTO", stepOrder: order++, stepType: { stepTypeKey: key }, endCondition: { conditionTypeKey: cond }, endConditionValue: val, description: null });
-  const edge = (key, x) => {
-    if (x.kind === "none") return null;
-    if (x.kind === "time") return mk(key, "time", parseTime(x.value));
-    if (x.kind === "distance") return mk(key, "distance", Math.round(parseFloat(String(x.value).replace(",", ".")) * 1000) || 1000);
-    return mk(key, "lap.button", null);
+  const conv = x => {
+    if (x.kind === "repeat") {
+      return { type: "RepeatGroupDTO", stepOrder: order++, stepType: { stepTypeKey: "repeat" }, numberOfIterations: x.count,
+               skipLastRestStep: x.skipLast, endCondition: { conditionTypeKey: "iterations" }, endConditionValue: x.count, workoutSteps: x.steps.map(conv) };
+    }
+    const o = { type: "ExecutableStepDTO", stepOrder: order++, stepType: { stepTypeKey: x.type },
+                endCondition: { conditionTypeKey: x.end === "open" ? "lap.button" : x.end }, endConditionValue: x.end === "open" ? null : x.value,
+                description: x.desc || null, targetType: { workoutTargetTypeKey: "no.target" } };
+    if (x.target) Object.assign(o, { targetType: { workoutTargetTypeKey: sp.metric === "speed" ? "speed.zone" : "pace.zone" },
+                                     targetValueOne: +(x.target * .98).toFixed(3), targetValueTwo: +(x.target * 1.02).toFixed(3) });
+    return o;
   };
-  const steps = [];
-  const w = edge("warmup", d.warm); if (w) steps.push(w);
-  const workVal = r => d.unit === "distance" ? Math.round(parseFloat(String(r.work).replace(",", ".")) || 0) : parseTime(r.work);
-  const rows = d.rows.filter(r => workVal(r) > 0);
-  const inner = [];
-  rows.forEach((r, i) => {
-    const step = mk("interval", d.unit === "distance" ? "distance" : "time", workVal(r));
-    const speed = d.unit === "distance" ? targetToSpeed(r.target, d.sport) : null;
-    if (speed) Object.assign(step, { targetType: { workoutTargetTypeKey: sp.metric === "speed" ? "speed.zone" : "pace.zone" }, targetValueOne: +(speed * .98).toFixed(3), targetValueTwo: +(speed * 1.02).toFixed(3) });
-    inner.push(step);
-    const last = i === rows.length - 1;
-    const rest = last ? (d.reps > 1 ? parseTime(d.between) : 0) : parseTime(r.rest);
-    if (rest > 0) inner.push(mk("recovery", "time", rest));
+  return { workoutName: d.name.trim(), description: null, sportType: { sportTypeKey: sp.garmin },
+           workoutSegments: [{ segmentOrder: 1, sportType: { sportTypeKey: sp.garmin }, workoutSteps: d.steps.map(conv) }] };
+}
+
+// ---------- pomocné ----------
+const stepName = (x, sport) => x.desc || SPORTS[sport].names[x.type];
+function stepSummary(x, sport) {
+  const v = x.end === "time" ? fmt(x.value) : x.end === "distance" ? distTxt(x.value) : "Do stisku tlačítka";
+  const t = x.target ? (SPORTS[sport].metric === "speed" ? "rychlost " : "tempo ") + targetTxt(x.target, sport) : "";
+  return [x.desc ? SPORTS[sport].names[x.type] : "", v, t].filter(Boolean).join(" · ");
+}
+const findAt = (d, path) => path.length === 1 ? { list: d.steps, i: path[0] } : { list: d.steps[path[0]].steps, i: path[1] };
+const getAt = (d, path) => { const { list, i } = findAt(d, path); return list[i]; };
+
+// ---------- validace ----------
+function stepProblem(x, sport) {
+  if (x.end === "time" && !(x.value > 0)) return "Zadej čas kroku";
+  if (x.end === "distance" && !(x.value > 0)) return "Zadej vzdálenost kroku";
+  if (x.target != null && !(x.target > 0)) return SPORTS[sport].metric === "speed" ? "Zadej cílovou rychlost" : "Zadej cílové tempo";
+  return "";
+}
+function validateDraft(d) {
+  const list = [], byId = {};
+  const type = d.type === "__new" ? d.newType.trim() : d.type;
+  if (!d.name.trim()) list.push({ msg: "Zadej název tréninku", focus: "edName" });
+  if (!type) list.push({ msg: "Zadej název nového typu tréninku", focus: "edNewType" });
+  else if (/[\/\\]/.test(type)) list.push({ msg: "Název typu nesmí obsahovat lomítko", focus: "edNewType" });
+  if (!d.steps.length) list.push({ msg: "Přidej aspoň jeden krok", focus: "edAddStep" });
+  d.steps.forEach((x, i) => {
+    if (x.kind === "repeat") {
+      if (!x.steps.length) { byId[x.id] = "Opakování je prázdné, přidej do něj krok"; list.push({ msg: `Opakování (${i + 1}. položka) je prázdné`, focus: "step-" + x.id }); }
+      x.steps.forEach((y, j) => { const p = stepProblem(y, d.sport); if (p) { byId[y.id] = p; list.push({ msg: `${stepName(y, d.sport)} v opakování (${j + 1}. krok): ${p.toLowerCase()}`, focus: "step-" + y.id }); } });
+    } else {
+      const p = stepProblem(x, d.sport);
+      if (p) { byId[x.id] = p; list.push({ msg: `${stepName(x, d.sport)} (${i + 1}. krok): ${p.toLowerCase()}`, focus: "step-" + x.id }); }
+    }
   });
-  if (d.reps > 1) steps.push({ type: "RepeatGroupDTO", stepOrder: order++, stepType: { stepTypeKey: "repeat" }, numberOfIterations: d.reps, skipLastRestStep: true, workoutSteps: inner });
-  else steps.push(...inner);
-  const c = edge("cooldown", d.cool); if (c) steps.push(c);
-  return { workoutName: d.name.trim(), description: null, sportType: { sportTypeKey: sp.garmin }, workoutSegments: [{ segmentOrder: 1, sportType: { sportTypeKey: sp.garmin }, workoutSteps: steps }], createdWith: "TRImates" };
+  if (!gh.token()) list.push({ msg: "Pro uložení je potřeba připojit GitHub v Nastavení", link: "settings" });
+  return list.length ? { list, byId } : null;
 }
-function draftObj(d) {
-  if (d.mode === "import") { const o = JSON.parse(JSON.stringify(d.imported)); o.workoutName = d.name.trim(); o.sportType = { ...(o.sportType || {}), sportTypeKey: SPORTS[d.sport].garmin }; return o; }
-  return buildGarmin(d);
-}
-function edgeField(d, key, label) {
-  const x = d[key], sp = SPORTS[d.sport];
-  const opts = [["none", "Žádný"], ["time", "Čas"], ["distance", "Vzdálenost"], ["open", "Volně"]];
-  return `<div class="field"><span class="lbl">${label}</span>
-    <div class="chips" data-edge="${key}">${opts.map(([k, l]) => `<button class="chip" data-k="${k}" aria-pressed="${x.kind === k}">${l}</button>`).join("")}</div>
-    ${x.kind === "time" || x.kind === "distance" ? `<div class="inline"><input class="input small" data-edgeval="${key}" inputmode="decimal" value="${esc(x.value)}" aria-label="${label} – ${x.kind === "time" ? "minuty" : "kilometry"}"><span class="unit">${x.kind === "time" ? "min:s" : "km"}</span></div>` : ""}
-    ${x.kind === "open" ? `<p class="help">Úsek ukončíš tlačítkem Úsek hotový</p>` : ""}
-    ${x.kind === "distance" && sp ? `<p class="help">Venku se měří přes GPS, na trenažéru ho ukončíš tlačítkem</p>` : ""}</div>`;
+
+// ---------- vykreslení editoru ----------
+function stepCard(x, path, sport, err) {
+  return `<button class="scard${err ? " bad" : ""}" id="step-${x.id}" data-path="${path.join(".")}" data-type="${x.type}">
+    <span class="bar" aria-hidden="true"></span>
+    <span class="smain"><b>${esc(stepName(x, sport))}</b><span class="meta">${esc(stepSummary(x, sport))}</span>${err ? `<span class="error">${esc(err)}</span>` : ""}</span>${ICON_CHEV}</button>`;
 }
 function renderEditor() {
   const n = curNav(), d = n.draft;
   if (!d) return;
-  $("edTitle").textContent = d.mode === "import" ? "Nahrát trénink" : "Nový trénink";
-  const types = typesOf(d.sport);
-  const e = d.errors || {};
-  let h = `
+  $("edTitle").textContent = d.mode === "edit" ? "Upravit trénink" : d.mode === "import" ? "Nahrát trénink" : "Nový trénink";
+  $("saveBtn").textContent = d.saving ? "Ukládám…" : "Uložit trénink";
+  const sp = SPORTS[d.sport], e = d.errors, byId = (e && e.byId) || {};
+  let h = "";
+  if (e && e.list.length) {
+    h += `<div class="errsum" id="errSum" role="alert" tabindex="-1"><b>Trénink zatím nejde uložit</b><ul>${e.list.map(x =>
+      `<li>${x.link ? `${esc(x.msg)} · <a href="#" data-link="${x.link}">Otevřít Nastavení</a>` : x.focus ? `<a href="#" data-errfocus="${x.focus}">${esc(x.msg)}</a>` : esc(x.msg)}</li>`).join("")}</ul></div>`;
+  }
+  const nameErr = e && e.list.find(x => x.focus === "edName"), typeErr = e && e.list.find(x => x.focus === "edNewType");
+  h += `
    <div class="field"><label for="edName">Název</label>
-    <input class="input" id="edName" value="${esc(d.name)}" placeholder="např. 4x (3-2-1 min)" autocomplete="off">
-    ${e.name ? `<p class="error">${e.name}</p>` : ""}</div>
+    <input class="input${nameErr ? " bad" : ""}" id="edName" value="${esc(d.name)}" placeholder="např. 4x (3-2-1 min)" autocomplete="off">
+    ${nameErr ? `<p class="error">${esc(nameErr.msg)}</p>` : ""}</div>
    <div class="field"><span class="lbl">Sport</span>
     <div class="seg" style="margin-top:0" data-sportseg>${Object.values(SPORTS).map(s => `<button data-s="${s.key}" aria-pressed="${d.sport === s.key}">${s.label}</button>`).join("")}</div></div>
    <div class="field"><span class="lbl">Typ tréninku</span>
-    <div class="chips" data-typechips>${types.map(t => `<button class="chip" data-t="${esc(t)}" aria-pressed="${d.type === t}">${esc(t)}</button>`).join("")}<button class="chip" data-t="__new" aria-pressed="${d.type === "__new"}">Jiný…</button></div>
-    ${d.type === "__new" ? `<input class="input" id="edNewType" style="margin-top:var(--s-xs)" value="${esc(d.newType)}" placeholder="Název nového typu" aria-label="Název nového typu">` : ""}
-    ${e.type ? `<p class="error">${e.type}</p>` : ""}</div>`;
-  if (d.mode === "build") {
-    const sp = SPORTS[d.sport], dist = d.unit === "distance";
-    h += edgeField(d, "warm", sp.names.warmup);
-    h += `<div class="box"><span class="lbl">Série</span>
-      <div class="field" style="margin-top:var(--s-s)"><span class="lbl" style="font-weight:400">Počet opakování</span>
-       <div class="stepper"><button data-reps="-1" aria-label="Méně">−</button><output id="edReps">${d.reps}</output><button data-reps="1" aria-label="Více">+</button></div></div>
-      <div class="seg" style="margin-top:var(--s-s)" data-unitseg><button data-u="time" aria-pressed="${d.unit === "time"}">Úseky na čas</button><button data-u="distance" aria-pressed="${d.unit === "distance"}">Na vzdálenost</button></div>
-      <div class="bhead${dist ? " d" : ""}"><span></span><span>${dist ? "Úsek, m" : "Interval"}</span>${dist ? `<span>Cíl ${sp.metric === "speed" ? "km/h" : "/km"}</span>` : ""}<span>${sp.names.recovery === "Volně" ? "Volně" : "Meziklus"}</span><span></span></div>
-      ${d.rows.map((r, i) => `<div class="brow${dist ? " d" : ""}"><span class="n">${i + 1}.</span>
-        <input class="input" data-row="${i}" data-f="work" inputmode="${dist ? "numeric" : "decimal"}" value="${esc(r.work)}" aria-label="${dist ? "Úsek " + (i + 1) + ", metry" : "Interval " + (i + 1) + ", min:s"}">
-        ${dist ? `<input class="input" data-row="${i}" data-f="target" inputmode="decimal" value="${esc(r.target || "")}" placeholder="${sp.metric === "speed" ? "35" : "4:00"}" aria-label="Cíl úseku ${i + 1}">` : ""}
-        ${i < d.rows.length - 1 ? `<input class="input" data-row="${i}" data-f="rest" inputmode="decimal" value="${esc(r.rest)}" aria-label="Pauza po úseku ${i + 1}, min:s">` : `<span class="help" style="text-align:center">${d.reps > 1 ? "viz níže" : "—"}</span>`}
-        <button class="iconbtn" data-del="${i}" aria-label="Odebrat úsek ${i + 1}">✕</button></div>`).join("")}
-      <p class="help">${dist ? `Úsek v metrech, třeba 200. Cíl je nepovinný: ${sp.metric === "speed" ? "rychlost v km/h, třeba 35" : "tempo v min/km, třeba 4:00"}. Po úseku ti aplikace řekne, jestli jsi v něm. Pauzy piš jako min:s.` : "Časy piš jako min:s, například 3:00 nebo 0:45"}</p>
-      ${e.rows ? `<p class="error">${e.rows}</p>` : ""}
-      <button class="btn-tertiary" id="edAddRow" style="margin-top:var(--s-xs)">Přidat úsek</button>
-      ${d.reps > 1 ? `<div class="field"><label for="edBetween">${d.rows.length === 1 ? "Pauza mezi opakováními" : "Pauza mezi sériemi"}</label><div class="inline" style="margin-top:0"><input class="input small" id="edBetween" inputmode="decimal" value="${esc(d.between)}"><span class="unit">min:s</span></div></div>` : ""}
-     </div>`;
-    h += edgeField(d, "cool", sp.names.cooldown);
-  }
-  h += `<div class="preview"><div class="meta" id="edMeta"></div><div class="strip" id="edStrip" aria-hidden="true"></div></div>`;
+    <div class="chips" data-typechips>${typesOf(d.sport).map(t => `<button class="chip" data-t="${esc(t)}" aria-pressed="${d.type === t}">${esc(t)}</button>`).join("")}<button class="chip" data-t="__new" aria-pressed="${d.type === "__new"}">Jiný…</button></div>
+    ${d.type === "__new" ? `<input class="input${typeErr ? " bad" : ""}" id="edNewType" style="margin-top:var(--s-xs)" value="${esc(d.newType)}" placeholder="Název nového typu" aria-label="Název nového typu">` : ""}
+    ${typeErr ? `<p class="error">${esc(typeErr.msg)}</p>` : ""}</div>
+   <div class="field"><span class="lbl">Kroky</span><p class="help" style="margin-top:0">Ťukni na krok a uprav ho</p>`;
+  d.steps.forEach((x, i) => {
+    if (x.kind === "repeat") {
+      h += `<div class="rbox${byId[x.id] ? " bad" : ""}" id="step-${x.id}" data-rpath="${i}">
+        <div class="rhead"><span class="lbl">Opakovat</span>
+         <div class="stepper"><button data-rep="-1" aria-label="Méně opakování">−</button><output>${x.count}×</output><button data-rep="1" aria-label="Více opakování">+</button></div></div>
+        ${x.steps.map((y, j) => stepCard(y, [i, j], d.sport, byId[y.id])).join("")}
+        ${byId[x.id] ? `<p class="error">${esc(byId[x.id])}</p>` : ""}
+        <label class="check"><input type="checkbox" data-skip ${x.skipLast ? "checked" : ""}><span>Vynechat poslední pauzu<span class="sub">Po posledním opakování se rovnou pokračuje dál</span></span></label>
+        <div class="rfoot"><button class="btn-tertiary" data-addin>+ Krok do opakování</button><button class="btn-tertiary danger" data-delrep>Smazat opakování</button></div>
+      </div>`;
+    } else h += stepCard(x, [i], d.sport, byId[x.id]);
+  });
+  h += `<div class="addrow"><button class="btn btn-secondary" id="edAddStep">+ Krok</button><button class="btn btn-secondary" id="edAddRepeat">+ Opakování</button></div></div>
+   <div class="preview"><div class="meta" id="edMeta"></div><div class="strip" id="edStrip" aria-hidden="true"></div></div>`;
   $("edBody").innerHTML = h;
   updatePreview();
 }
 function updatePreview() {
   const d = curNav().draft;
   try {
-    const p = parseJson(draftObj({ ...d, name: d.name || "x" }), d.sport);
+    const p = parseJson(draftToGarmin({ ...d, name: d.name || "x" }), d.sport);
     $("edMeta").textContent = "Náhled · " + workoutMeta({ ...p, sport: d.sport }) + " · " + p.steps.length + " " + plural(p.steps.length, "krok", "kroky", "kroků");
     buildStrip($("edStrip"), p.steps, d.sport);
-  } catch (e) { $("edMeta").textContent = "Přidej aspoň jeden interval"; $("edStrip").innerHTML = ""; }
+  } catch (err) { $("edMeta").textContent = "Náhled se zobrazí, až přidáš kroky"; $("edStrip").innerHTML = ""; }
 }
+/** Po úpravě zmizí chyby, které už neplatí (hlavní seznam se přepočítá) */
+function revalidate(d) { if (d.errors) d.errors = validateDraft(d); }
+
 $("edBody").addEventListener("input", e => {
   const d = curNav().draft, t = e.target;
-  if (t.id === "edName") d.name = t.value;
+  if (t.id === "edName") { d.name = t.value; if (d.errors) { d.errors = validateDraft(d); if (t.value.trim()) { t.classList.remove("bad"); const er = t.parentElement.querySelector(".error"); if (er) er.remove(); } } }
   else if (t.id === "edNewType") d.newType = t.value;
-  else if (t.id === "edBetween") d.between = t.value;
-  else if (t.dataset.row) d.rows[+t.dataset.row][t.dataset.f] = t.value;
-  else if (t.dataset.edgeval) d[t.dataset.edgeval].value = t.value;
   updatePreview();
 });
+$("edBody").addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.skip !== undefined) { const d = curNav().draft; d.steps[+t.closest("[data-rpath]").dataset.rpath].skipLast = t.checked; updatePreview(); }
+});
 $("edBody").addEventListener("click", e => {
-  const d = curNav().draft, b = e.target.closest("button");
+  const d = curNav().draft;
+  const f = e.target.closest("[data-errfocus]");
+  if (f) {
+    e.preventDefault();
+    const el = $(f.dataset.errfocus);
+    if (el) { el.scrollIntoView({ block: "center", behavior: "smooth" }); if (el.tagName === "INPUT") el.focus({ preventScroll: true }); }
+    return;
+  }
+  const card = e.target.closest(".scard");
+  if (card) { openStepSheet(d, card.dataset.path.split(".").map(Number), false); return; }
+  const b = e.target.closest("button");
   if (!b) return;
+  const rbox = b.closest("[data-rpath]"), ri = rbox ? +rbox.dataset.rpath : -1;
   if (b.closest("[data-sportseg]")) d.sport = b.dataset.s;
   else if (b.closest("[data-typechips]")) d.type = b.dataset.t;
-  else if (b.closest("[data-edge]")) {
-    const key = b.closest("[data-edge]").dataset.edge;
-    d[key] = { kind: b.dataset.k, value: b.dataset.k === "distance" ? "1" : b.dataset.k === "time" ? "10:00" : "" };
+  else if (b.dataset.rep) { const r = d.steps[ri]; r.count = Math.min(50, Math.max(1, r.count + Number(b.dataset.rep))); }
+  else if (b.dataset.delrep !== undefined) {
+    const removed = d.steps.splice(ri, 1)[0];
+    renderEditor();
+    toast("Opakování smazáno", () => { d.steps.splice(ri, 0, removed); renderEditor(); });
+    return;
   }
-  else if (b.closest("[data-unitseg]")) {
-    if (d.unit === b.dataset.u) return;
-    d.unit = b.dataset.u;
-    if (d.unit === "distance") { d.rows = [{ work: "200", target: "", rest: "1:00" }]; d.reps = 8; d.between = "1:00"; }
-    else { d.rows = [{ work: "3:00", rest: "0:45", target: "" }, { work: "2:00", rest: "0:45", target: "" }, { work: "1:00", rest: "", target: "" }]; d.reps = 4; d.between = "2:00"; }
+  else if (b.dataset.addin !== undefined) {
+    const r = d.steps[ri], last = r.steps[r.steps.length - 1];
+    r.steps.push(last && last.type === "interval" ? mkStep("recovery", "time", 60) : mkStep("interval", "time", 60));
+    openStepSheet(d, [ri, r.steps.length - 1], true);
   }
-  else if (b.dataset.reps) d.reps = Math.min(20, Math.max(1, d.reps + Number(b.dataset.reps)));
-  else if (b.dataset.del) { d.rows.splice(+b.dataset.del, 1); if (!d.rows.length) d.rows.push({ work: d.unit === "distance" ? "200" : "1:00", rest: "", target: "" }); }
-  else if (b.id === "edAddRow") { const last = d.rows[d.rows.length - 1]; if (last && !last.rest) last.rest = "1:00"; d.rows.push({ work: d.unit === "distance" ? "200" : "1:00", rest: "", target: "" }); }
+  else if (b.id === "edAddStep") { const at = insertAt(d); d.steps.splice(at, 0, mkStep("interval", "time", 300)); openStepSheet(d, [at], true); }
+  else if (b.id === "edAddRepeat") d.steps.splice(insertAt(d), 0, { id: uid(), kind: "repeat", count: 4, skipLast: true, steps: [mkStep("interval", "time", 60), mkStep("recovery", "time", 60)] });
   else return;
+  revalidate(d);
   renderEditor();
 });
+
+/** Nové kroky se vkládají před závěrečný výklus, jako v Garmin Connect */
+function insertAt(d) {
+  const last = d.steps[d.steps.length - 1];
+  return last && last.kind === "step" && last.type === "cooldown" ? d.steps.length - 1 : d.steps.length;
+}
+
+// ---------- panel pro úpravu jednoho kroku ----------
+let sheet = null; // { d, path, isNew, x: kopie kroku, unit, err }
+function openStepSheet(d, path, isNew) {
+  const x = { ...getAt(d, path) };
+  sheet = { d, path, isNew, x, unit: x.end === "distance" && x.value >= 1000 && x.value % 100 === 0 ? "km" : "m", err: "", targetOn: x.target != null };
+  renderStepSheet();
+  $("stepSheet").hidden = false; $("stepScrim").hidden = false;
+}
+function closeStepSheet(cancel) {
+  if (!sheet) return;
+  if (cancel && sheet.isNew) { const { list, i } = findAt(sheet.d, sheet.path); list.splice(i, 1); }
+  sheet = null;
+  $("stepSheet").hidden = true; $("stepScrim").hidden = true;
+  renderEditor();
+}
+function renderStepSheet() {
+  const s = sheet, x = s.x, sp = SPORTS[s.d.sport];
+  const mm = Math.floor((x.value || 0) / 60), ss = Math.round((x.value || 0) % 60);
+  const tSec = x.target ? 1000 / x.target : 0;
+  const { list, i } = findAt(s.d, s.path);
+  let h = `<div class="grab"></div><h2 id="stepTitle">${s.isNew ? "Nový krok" : "Upravit krok"}</h2>
+   <div class="field"><span class="lbl">Typ kroku</span>
+    <div class="chips" data-stype>${STEP_TYPES.map(t => `<button class="chip" data-t="${t}" aria-pressed="${x.type === t}">${sp.names[t]}</button>`).join("")}</div></div>
+   <div class="field"><span class="lbl">Délka kroku</span>
+    <div class="seg" style="margin-top:0" data-send>
+     <button data-e="time" aria-pressed="${x.end === "time"}">Čas</button><button data-e="distance" aria-pressed="${x.end === "distance"}">Vzdálenost</button><button data-e="open" aria-pressed="${x.end === "open"}">Tlačítko</button></div>`;
+  if (x.end === "time") h += `<div class="inline"><input class="input small" id="stMin" inputmode="numeric" value="${mm || (x.value ? 0 : "")}" aria-label="Minuty"><span class="unit">min</span><input class="input small" id="stSec" inputmode="numeric" value="${x.value ? String(ss).padStart(2, "0") : ""}" aria-label="Sekundy"><span class="unit">s</span></div>`;
+  if (x.end === "distance") h += `<div class="inline"><input class="input small" id="stDist" inputmode="decimal" value="${x.value ? (s.unit === "km" ? String(x.value / 1000).replace(".", ",") : x.value) : ""}" aria-label="Vzdálenost">
+     <div class="seg mini" data-sunit><button data-u="m" aria-pressed="${s.unit === "m"}">m</button><button data-u="km" aria-pressed="${s.unit === "km"}">km</button></div></div>
+     <p class="help">Venku se měří přes GPS, na trenažéru krok ukončíš tlačítkem</p>`;
+  if (x.end === "open") h += `<p class="help">Krok skončí, až ťukneš na Úsek hotový. Hodí se na rozklus nebo výklus bez pevné délky.</p>`;
+  if (s.err && !/cíl/i.test(s.err)) h += `<p class="error" role="alert">${esc(s.err)}</p>`;
+  h += `</div>
+   <div class="field"><span class="lbl">Cíl</span>
+    <div class="seg" style="margin-top:0" data-starget><button data-on="0" aria-pressed="${!s.targetOn}">Bez cíle</button><button data-on="1" aria-pressed="${s.targetOn}">${sp.metric === "speed" ? "Rychlost" : "Tempo"}</button></div>
+    ${s.targetOn ? (sp.metric === "speed"
+      ? `<div class="inline"><input class="input small" id="stSpeed" inputmode="decimal" value="${x.target ? String(+(x.target * 3.6).toFixed(1)).replace(".", ",") : ""}" aria-label="Cílová rychlost"><span class="unit">km/h</span></div>`
+      : `<div class="inline"><input class="input small" id="stPm" inputmode="numeric" value="${tSec ? Math.floor(tSec / 60) : ""}" aria-label="Tempo, minuty"><span class="unit">:</span><input class="input small" id="stPs" inputmode="numeric" value="${tSec ? String(Math.round(tSec % 60)).padStart(2, "0") : ""}" aria-label="Tempo, sekundy"><span class="unit">min/km</span></div>`)
+      : ""}
+    ${s.targetOn ? `<p class="help">Po kroku ti aplikace řekne, jestli jsi v cíli</p>` : ""}
+    ${s.err && /cíl/i.test(s.err) ? `<p class="error" role="alert">${esc(s.err)}</p>` : ""}</div>
+   <div class="field"><label for="stDesc">Popis <span class="opt">nepovinný</span></label>
+    <input class="input" id="stDesc" value="${esc(x.desc)}" placeholder="např. Tempo na 10 km" autocomplete="off"></div>
+   <button class="btn btn-primary" id="stDone" style="margin-top:var(--s-m)">Hotovo</button>
+   ${s.isNew ? "" : `<div class="sheetfoot">
+     <button class="btn-tertiary" data-move="-1" ${i === 0 ? "hidden" : ""}>Posunout výš</button>
+     <button class="btn-tertiary" data-move="1" ${i === list.length - 1 ? "hidden" : ""}>Posunout níž</button>
+     <button class="btn-tertiary danger" id="stDel">Smazat krok</button></div>`}`;
+  $("stepBody").innerHTML = h;
+}
+/** Přečte hodnoty z polí panelu do kopie kroku */
+function readSheetInputs() {
+  const s = sheet, x = s.x, sp = SPORTS[s.d.sport];
+  const num = id => { const el = $(id); return el ? parseFloat(el.value.replace(",", ".")) : NaN; };
+  if ($("stDesc")) x.desc = $("stDesc").value.trim();
+  if (x.end === "time" && $("stMin")) x.value = Math.round((num("stMin") || 0) * 60 + (num("stSec") || 0));
+  if (x.end === "distance" && $("stDist")) { const v = num("stDist"); x.value = v > 0 ? Math.round(s.unit === "km" ? v * 1000 : v) : 0; }
+  if (!s.targetOn) x.target = null;
+  else if (sp.metric === "speed" && $("stSpeed")) { const v = num("stSpeed"); x.target = v > 0 ? v / 3.6 : 0; }
+  else if ($("stPm")) { const sec = (num("stPm") || 0) * 60 + (num("stPs") || 0); x.target = sec > 0 ? 1000 / sec : 0; }
+}
+$("stepScrim").addEventListener("click", () => closeStepSheet(true));
+$("stepBody").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b || !sheet) return;
+  const s = sheet, x = s.x;
+  readSheetInputs();
+  if (b.closest("[data-stype]")) x.type = b.dataset.t;
+  else if (b.closest("[data-send]")) {
+    if (x.end !== b.dataset.e) { x.end = b.dataset.e; x.value = x.end === "time" ? 60 : x.end === "distance" ? 400 : 0; s.unit = "m"; }
+  }
+  else if (b.closest("[data-sunit]")) s.unit = b.dataset.u;
+  else if (b.closest("[data-starget]")) s.targetOn = b.dataset.on === "1";
+  else if (b.dataset.move) {
+    const { list, i } = findAt(s.d, s.path), j = i + Number(b.dataset.move);
+    list[i] = { ...x };
+    [list[i], list[j]] = [list[j], list[i]];
+    sheet = null; $("stepSheet").hidden = true; $("stepScrim").hidden = true;
+    renderEditor();
+    return;
+  }
+  else if (b.id === "stDel") {
+    const { list, i } = findAt(s.d, s.path), removed = list.splice(i, 1)[0];
+    sheet = null; $("stepSheet").hidden = true; $("stepScrim").hidden = true;
+    revalidate(s.d); renderEditor();
+    toast("Krok smazán", () => { list.splice(i, 0, removed); revalidate(s.d); renderEditor(); });
+    return;
+  }
+  else if (b.id === "stDone") {
+    const p = stepProblem(x, s.d.sport);
+    if (p) { s.err = p; renderStepSheet(); const er = $("stepBody").querySelector(".error"); if (er) er.scrollIntoView({ block: "center", behavior: "smooth" }); return; }
+    const { list, i } = findAt(s.d, s.path);
+    list[i] = { ...x };
+    sheet = null; $("stepSheet").hidden = true; $("stepScrim").hidden = true;
+    revalidate(s.d); renderEditor();
+    return;
+  }
+  else return;
+  s.err = "";
+  renderStepSheet();
+});
+
+// ---------- uložení ----------
 $("saveBtn").addEventListener("click", async () => {
   const d = curNav().draft;
-  d.errors = {};
-  const type = d.type === "__new" ? d.newType.trim() : d.type;
-  if (!d.name.trim()) d.errors.name = "Zadej název tréninku";
-  if (!type) d.errors.type = "Zadej název typu";
-  else if (/[\/\\]/.test(type)) d.errors.type = "Název typu nesmí obsahovat lomítko";
-  if (d.mode === "build" && d.unit !== "distance" && !d.rows.some(r => parseTime(r.work) > 0)) d.errors.rows = "Přidej aspoň jeden interval s časem";
-  if (d.mode === "build" && d.unit === "distance") {
-    if (!d.rows.some(r => parseFloat(String(r.work).replace(",", ".")) > 0)) d.errors.rows = "Zadej délku úseku v metrech, třeba 200";
-    else if (d.rows.some(r => String(r.target || "").trim() && !targetToSpeed(r.target, d.sport))) d.errors.rows = SPORTS[d.sport].metric === "speed" ? "Cíl zadej jako rychlost v km/h, třeba 35" : "Cíl zadej jako tempo min:s na kilometr, třeba 4:00";
+  if (!d || d.saving) return;
+  d.errors = validateDraft(d);
+  if (d.errors) {
+    renderEditor();
+    const el = $("errSum");
+    if (el) { el.scrollIntoView({ block: "start", behavior: "smooth" }); el.focus({ preventScroll: true }); }
+    return;
   }
-  if (Object.keys(d.errors).length) { renderEditor(); return; }
-  const obj = draftObj(d);
+  const type = d.type === "__new" ? d.newType.trim() : d.type;
+  const obj = draftToGarmin(d);
   const text = JSON.stringify(obj, null, 2) + "\n";
-  let base = `${CFG.dir}/${d.sport}/${type}/${slug(d.name)}`, path = base + ".json", i = 2;
-  while (library.some(w => w.path === path)) path = `${base}-${i++}.json`;
-  const btn = $("saveBtn");
-  btn.textContent = "Ukládám…";
+  const dir = `${CFG.dir}/${d.sport}/${type}/`;
+  let path = d.path && d.path.startsWith(dir) ? d.path : null;
+  if (!path) { const base = dir + slug(d.name); path = base + ".json"; let i = 2; while (library.some(w => w.path === path && w.path !== d.path)) path = `${base}-${i++}.json`; }
+  d.saving = true; renderEditor();
   try {
-    const sha = await gh.put(path, text, null, "Nový trénink " + d.name.trim());
-    library.push({ path, sha, ...fromFile(path, sha, obj) });
-    store.set("library3", library);
-    btn.textContent = "Uložit trénink";
+    const sha = await gh.put(path, text, path === d.path ? d.sha : null, (d.mode === "edit" ? "Upraven trénink " : "Nový trénink ") + d.name.trim());
+    if (d.path && path !== d.path) { try { await gh.del(d.path, d.sha, "Přesun tréninku " + d.name.trim()); } catch (e) {} }
+    library = library.filter(w => w.path !== d.path && w.path !== path);
+    library.push({ ...fromFile(path, sha, obj), path, sha });
+    store.set("library4", library);
+    d.saving = false;
     nav = [{ screen: "home" }, { screen: "list", sport: d.sport }];
     history.pushState({ n: 2 }, "");
     show();
-    toast("Trénink uložen");
+    toast(d.mode === "edit" ? "Změny uloženy" : "Trénink uložen");
   } catch (e) {
-    btn.textContent = "Uložit trénink";
-    toast(e.status === 401 || e.status === 403 ? "GitHub odmítl token, zkontroluj ho v nastavení" : "Uložení se nepovedlo, zkontroluj připojení");
+    d.saving = false;
+    const msg = e.status === 401 || e.status === 403 ? "GitHub odmítl token. Zkontroluj ho v Nastavení."
+      : e.status === 409 || e.status === 422 ? "Trénink se mezitím změnil na GitHubu. Vrať se do seznamu a otevři ho znovu."
+      : !navigator.onLine ? "Telefon je offline. Uložit půjde, až bude připojení."
+      : "Uložení se nepovedlo (chyba " + (e.status || "spojení") + "). Zkus to za chvíli znovu.";
+    d.errors = { list: [{ msg, link: e.status === 401 || e.status === 403 ? "settings" : null }], byId: {} };
+    renderEditor();
+    const el = $("errSum"); if (el) { el.scrollIntoView({ block: "start", behavior: "smooth" }); el.focus({ preventScroll: true }); }
   }
 });
+
+/** Úprava existujícího tréninku: načte soubor z GitHubu a otevře ho v editoru */
+async function editWorkout(w) {
+  try {
+    const obj = JSON.parse(await gh.raw(w.path));
+    go("editor", { draft: garminToDraft(obj, { mode: "edit", path: w.path, sha: w.sha, sport: w.sport, type: w.type }) });
+  } catch (e) { toast("Trénink se nepodařilo načíst, zkontroluj připojení"); }
+}
 
 // =========================================================
 // Nastavení
